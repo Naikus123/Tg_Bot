@@ -3,168 +3,150 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <!-- Мета-теги для сброса кэша Telegram Web App -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
     <title>Мой Помощник</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
+        /* Переменные для тем */
         :root {
-            --bg-color: var(--tg-theme-bg-color, #1c1c1e);
-            --secondary-bg: var(--tg-theme-secondary-bg-color, #2c2c2e);
-            --text-color: var(--tg-theme-text-color, #ffffff);
-            --hint-color: var(--tg-theme-hint-color, #98989d);
-            --accent-color: var(--tg-theme-button-color, #34c759);
-            --danger-color: #ff3b30;
+            --bg: #1c1c1e;
+            --surface: #2c2c2e;
+            --text: #ffffff;
+            --hint: #98989d;
+            --accent: #34c759;
+            --danger: #ff3b30;
         }
+        [data-theme="neon"] { --bg: #0d0221; --surface: #261447; --accent: #f72585; --text: #fff; }
+        [data-theme="hacker"] { --bg: #0a0a0a; --surface: #111; --accent: #00ff00; --text: #00ff00; --hint: #008800; }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
         
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            padding-bottom: 80px; /* Отступ для нижнего меню */
+        body { background-color: var(--bg); color: var(--text); padding-bottom: 80px; overflow-x: hidden; transition: background 0.3s; }
+
+        /* Анимированный фон (Звезды) */
+        #starfield { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; pointer-events: none; }
+
+        /* Splash Screen (Стартовый экран) */
+        #splash {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: var(--bg); display: flex; justify-content: center; align-items: center;
+            z-index: 9999; font-size: 40px; font-weight: 900; letter-spacing: 5px; color: var(--accent);
+            text-shadow: 0 0 20px var(--accent); animation: splashFade 2.5s forwards;
         }
+        @keyframes splashFade { 0% { opacity: 1; transform: scale(0.8); } 70% { opacity: 1; transform: scale(1.1); } 100% { opacity: 0; visibility: hidden; } }
 
         /* Заголовки */
-        .header {
-            padding: 20px;
-            font-size: 28px;
-            font-weight: bold;
-            background-color: var(--bg-color);
-            position: sticky;
-            top: 0;
-            z-index: 10;
-            border-bottom: 1px solid var(--secondary-bg);
-        }
+        .header { padding: 20px; font-size: 28px; font-weight: bold; position: sticky; top: 0; z-index: 10; background: rgba(var(--bg), 0.9); backdrop-filter: blur(10px); }
 
-        /* Контейнеры для контента (Вкладки) */
-        .tab-content { display: none; padding: 20px; }
-        .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
-
+        /* Вкладки */
+        .tab-content { display: none; padding: 20px; animation: fadeIn 0.3s; }
+        .tab-content.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Карточки записей */
+        /* Карточки */
         .card {
-            background-color: var(--secondary-bg);
-            border-radius: 16px;
-            padding: 16px;
-            margin-bottom: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            background-color: var(--surface); border-radius: 16px; padding: 16px; margin-bottom: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: transform 0.2s; cursor: pointer;
+            border: 1px solid transparent;
         }
+        .card:active { transform: scale(0.96); }
         .card-title { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
-        .card-text { font-size: 14px; color: var(--hint-color); white-space: pre-wrap; }
-        .card-meta { font-size: 12px; color: var(--accent-color); margin-top: 10px; font-weight: 500; }
+        .card-text { font-size: 14px; color: var(--hint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-height: 20px; }
+        .card-meta { font-size: 12px; color: var(--accent); margin-top: 10px; font-weight: 500; display: flex; justify-content: space-between;}
+        .countdown { color: var(--accent); font-weight: bold; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
 
-        /* Плавающая кнопка добавления (FAB) */
+        /* Плавающая кнопка (FAB) */
         .fab {
-            position: fixed;
-            bottom: 90px;
-            right: 20px;
-            width: 56px;
-            height: 56px;
-            border-radius: 28px;
-            background-color: var(--accent-color);
-            color: #fff;
-            display: flex; justify-content: center; align-items: center;
-            font-size: 28px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            cursor: pointer;
-            border: none;
-            transition: transform 0.1s;
-            z-index: 100;
+            position: fixed; bottom: 90px; right: 20px; width: 56px; height: 56px; border-radius: 28px;
+            background-color: var(--accent); color: #fff; border: none; font-size: 28px;
+            box-shadow: 0 0 15px var(--accent); cursor: pointer; z-index: 100; transition: 0.2s;
         }
-        .fab:active { transform: scale(0.9); }
+        .fab:active { transform: scale(0.8) rotate(45deg); }
 
-        /* Нижнее меню навигации */
+        /* Нижнее меню */
         .bottom-nav {
-            position: fixed;
-            bottom: 0; width: 100%;
-            background-color: var(--secondary-bg);
-            display: flex; justify-content: space-around;
-            padding: 10px 0 20px 0;
-            border-top: 1px solid rgba(0,0,0,0.1);
-            z-index: 100;
+            position: fixed; bottom: 0; width: 100%; background-color: var(--surface);
+            display: flex; justify-content: space-around; padding: 10px 0 20px 0; z-index: 100;
+            border-top: 1px solid rgba(255,255,255,0.05);
         }
-        .nav-item {
-            display: flex; flex-direction: column; align-items: center;
-            color: var(--hint-color); cursor: pointer;
-            font-size: 12px; font-weight: 500; width: 33%;
-        }
-        .nav-item.active { color: var(--accent-color); }
-        .nav-icon { font-size: 24px; margin-bottom: 4px; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; color: var(--hint); font-size: 12px; width: 25%; transition: 0.2s; }
+        .nav-item.active { color: var(--accent); transform: translateY(-3px); }
+        .nav-icon { font-size: 22px; margin-bottom: 4px; }
 
-        /* Модальное окно (Форма ввода) */
-        .modal-overlay {
+        /* Модальные окна (Редактор / Просмотр) */
+        .modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6); z-index: 200; justify-content: center; align-items: flex-end;
+            background: rgba(0,0,0,0.8); z-index: 200; flex-direction: column; justify-content: flex-end;
+            opacity: 0; transition: opacity 0.3s;
         }
+        .modal.open { display: flex; opacity: 1; }
         .modal-content {
-            background-color: var(--bg-color); width: 100%; border-radius: 20px 20px 0 0;
-            padding: 20px; animation: slideUp 0.3s ease;
+            background-color: var(--bg); width: 100%; height: 90vh; border-radius: 20px 20px 0 0;
+            padding: 20px; display: flex; flex-direction: column; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.1, 0.9, 0.2, 1);
         }
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .modal.open .modal-content { transform: translateY(0); }
         
-        .modal-title { font-size: 20px; font-weight: bold; margin-bottom: 15px; }
-        
-        .input-field {
-            width: 100%; background-color: var(--secondary-bg); color: var(--text-color);
-            border: none; border-radius: 12px; padding: 15px; margin-bottom: 15px;
-            font-size: 16px; outline: none; font-family: inherit;
+        .input-field, select {
+            width: 100%; background-color: var(--surface); color: var(--text); border: 1px solid var(--hint);
+            border-radius: 12px; padding: 15px; margin-bottom: 15px; font-size: 16px; outline: none; transition: 0.2s;
         }
-        
-        .btn-row { display: flex; gap: 10px; }
-        .btn {
-            flex: 1; padding: 15px; border-radius: 12px; border: none; font-size: 16px; font-weight: 600; cursor: pointer; color: #fff;
-        }
-        .btn-save { background-color: var(--accent-color); }
-        .btn-cancel { background-color: var(--secondary-bg); color: var(--text-color); }
+        .input-field:focus { border-color: var(--accent); box-shadow: 0 0 10px rgba(var(--accent), 0.3); }
+        textarea.input-field { flex-grow: 1; resize: none; }
 
-        /* Пустое состояние */
-        .empty-state { text-align: center; color: var(--hint-color); padding-top: 50px; }
-        .empty-icon { font-size: 48px; margin-bottom: 10px; opacity: 0.5; }
+        .btn-row { display: flex; gap: 10px; margin-top: auto; }
+        .btn { flex: 1; padding: 15px; border-radius: 12px; border: none; font-size: 16px; font-weight: bold; color: #fff; transition: 0.2s; }
+        .btn:active { transform: scale(0.95); }
+        .btn-save { background-color: var(--accent); }
+        .btn-cancel { background-color: var(--surface); color: var(--text); }
+        .btn-delete { background-color: var(--danger); flex: 0.3; }
+
+        /* Настройки */
+        .theme-btn { width: 100%; padding: 15px; margin-bottom: 10px; border-radius: 12px; border: none; font-weight: bold; background: var(--surface); color: var(--text); cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <!-- Вкладка: Заметки -->
-    <div id="tab-notes" class="tab-content active">
-        <div class="header">📝 Заметки</div>
-        <div id="notes-list"></div>
+    <div id="splash">An1mk0</div>
+    <canvas id="starfield"></canvas>
+
+    <!-- Вкладки -->
+    <div id="tab-notes" class="tab-content active"><div class="header">📝 Заметки</div><div id="notes-list"></div></div>
+    <div id="tab-todos" class="tab-content"><div class="header">📋 Список дел</div><div id="todos-list"></div></div>
+    <div id="tab-reminders" class="tab-content"><div class="header">⏰ Напоминания</div><div id="reminders-list"></div></div>
+    
+    <div id="tab-settings" class="tab-content">
+        <div class="header">⚙️ Настройки</div>
+        <div style="padding: 20px;">
+            <h3 style="margin-bottom: 15px;">Темы оформления</h3>
+            <button class="theme-btn" onclick="setTheme('default')" style="border-left: 5px solid #34c759;">Стандартная (Тёмная)</button>
+            <button class="theme-btn" onclick="setTheme('neon')" style="border-left: 5px solid #f72585;">Неоновый Киберпанк</button>
+            <button class="theme-btn" onclick="setTheme('hacker')" style="border-left: 5px solid #00ff00;">Хакерская</button>
+            <p style="color: var(--hint); font-size: 12px; margin-top: 20px;">Данные синхронизируются через облако Telegram.</p>
+        </div>
     </div>
 
-    <!-- Вкладка: Задачи -->
-    <div id="tab-todos" class="tab-content">
-        <div class="header">📋 Список дел</div>
-        <div id="todos-list"></div>
-    </div>
+    <button class="fab" onclick="openEditor()">+</button>
 
-    <!-- Вкладка: Напоминания -->
-    <div id="tab-reminders" class="tab-content">
-        <div class="header">⏰ Напоминания</div>
-        <div id="reminders-list"></div>
-    </div>
-
-    <!-- Кнопка "Добавить" -->
-    <button class="fab" onclick="openModal()">+</button>
-
-    <!-- Форма создания (Модальное окно) -->
-    <div id="modal" class="modal-overlay">
+    <!-- Полный экран (Чтение / Редактирование) -->
+    <div id="editor-modal" class="modal">
         <div class="modal-content">
-            <div id="modal-title" class="modal-title">Новая запись</div>
+            <input type="text" id="edit-title" class="input-field" placeholder="Название...">
+            <textarea id="edit-desc" class="input-field" placeholder="Описание..."></textarea>
             
-            <input type="text" id="input-title" class="input-field" placeholder="Название...">
-            
-            <!-- Поле для описания (Заметки/Задачи) -->
-            <textarea id="input-desc" class="input-field" placeholder="Описание..." rows="4"></textarea>
-            
-            <!-- Поле для времени (Только для напоминаний) -->
-            <input type="time" id="input-time" class="input-field" style="display: none;">
+            <div id="reminder-options" style="display: none;">
+                <label style="color: var(--hint); font-size: 12px;">Точная дата и время срабатывания:</label>
+                <input type="datetime-local" step="1" id="edit-time" class="input-field">
+                
+                <label style="color: var(--hint); font-size: 12px;">Прикрепить заметку/задачу:</label>
+                <select id="edit-attach" class="input-field">
+                    <option value="">-- Без привязки --</option>
+                </select>
+            </div>
 
             <div class="btn-row">
-                <button class="btn btn-cancel" onclick="closeModal()">Отмена</button>
+                <button class="btn btn-delete" id="btn-delete" onclick="deleteItem()">🗑</button>
+                <button class="btn btn-cancel" onclick="closeEditor()">Отмена</button>
                 <button class="btn btn-save" onclick="saveItem()">Сохранить</button>
             </div>
         </div>
@@ -172,18 +154,10 @@
 
     <!-- Нижняя навигация -->
     <div class="bottom-nav">
-        <div class="nav-item active" onclick="switchTab('notes', this)">
-            <span class="nav-icon">📝</span>
-            <span>Заметки</span>
-        </div>
-        <div class="nav-item" onclick="switchTab('todos', this)">
-            <span class="nav-icon">📋</span>
-            <span>Задачи</span>
-        </div>
-        <div class="nav-item" onclick="switchTab('reminders', this)">
-            <span class="nav-icon">⏰</span>
-            <span>Таймеры</span>
-        </div>
+        <div class="nav-item active" onclick="switchTab('notes', this)"><span class="nav-icon">📝</span><span>Заметки</span></div>
+        <div class="nav-item" onclick="switchTab('todos', this)"><span class="nav-icon">📋</span><span>Задачи</span></div>
+        <div class="nav-item" onclick="switchTab('reminders', this)"><span class="nav-icon">⏰</span><span>Таймеры</span></div>
+        <div class="nav-item" onclick="switchTab('settings', this)"><span class="nav-icon">⚙️</span><span>Настройки</span></div>
     </div>
 
     <script>
@@ -192,125 +166,225 @@
         tg.ready();
 
         let currentTab = 'notes';
+        let editingId = null; // ID редактируемой записи (null если новая)
 
-        // Инициализация данных (загрузка из памяти браузера/ТГ)
-        let appData = JSON.parse(localStorage.getItem('myBotData')) || {
-            notes: [], todos: [], reminders: []
-        };
+        // Инициализация структуры данных
+        let appData = { notes: [], todos: [], reminders: [] };
 
-        // Переключение вкладок
-        function switchTab(tabName, element) {
-            currentTab = tabName;
+        // --- ОБЛАЧНАЯ СИНХРОНИЗАЦИЯ TELEGRAM ---
+        function loadData() {
+            tg.CloudStorage.getItem('an1mk0_data', (err, val) => {
+                if (!err && val) {
+                    appData = JSON.parse(val);
+                }
+                renderList();
+            });
             
-            // Скрываем все вкладки
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            // Убираем выделение в меню
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            
-            // Показываем нужную вкладку
-            document.getElementById('tab-' + tabName).classList.add('active');
-            element.classList.add('active');
+            // Загружаем тему
+            tg.CloudStorage.getItem('an1mk0_theme', (err, val) => {
+                if (!err && val) setTheme(val);
+            });
+        }
 
+        function saveDataToCloud() {
+            tg.CloudStorage.setItem('an1mk0_data', JSON.stringify(appData));
+        }
+
+        function setTheme(themeName) {
+            document.documentElement.setAttribute('data-theme', themeName);
+            tg.CloudStorage.setItem('an1mk0_theme', themeName);
+        }
+
+        // --- НАВИГАЦИЯ ---
+        function switchTab(tab, el) {
+            currentTab = tab;
+            document.querySelectorAll('.tab-content').forEach(e => e.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active'));
+            document.getElementById('tab-' + tab).classList.add('active');
+            el.classList.add('active');
+            
+            document.querySelector('.fab').style.display = tab === 'settings' ? 'none' : 'flex';
             renderList();
         }
 
-        // Открытие формы добавления
-        function openModal() {
-            document.getElementById('modal').style.display = 'flex';
-            document.getElementById('input-title').value = '';
-            document.getElementById('input-desc').value = '';
-            document.getElementById('input-time').value = '';
+        // --- РЕДАКТОР (Создание и Изменение) ---
+        function openEditor(id = null) {
+            editingId = id;
+            const modal = document.getElementById('editor-modal');
+            const titleEl = document.getElementById('edit-title');
+            const descEl = document.getElementById('edit-desc');
+            const timeEl = document.getElementById('edit-time');
+            const attachEl = document.getElementById('edit-attach');
+            const remOpts = document.getElementById('reminder-options');
+            const btnDel = document.getElementById('btn-delete');
 
-            const titleEl = document.getElementById('modal-title');
-            const descEl = document.getElementById('input-desc');
-            const timeEl = document.getElementById('input-time');
+            // Заполняем выпадающий список привязок
+            attachEl.innerHTML = '<option value="">-- Без привязки --</option>';
+            appData.notes.concat(appData.todos).forEach(item => {
+                attachEl.innerHTML += `<option value="${item.title}">[${item.type === 'note' ? 'Заметка' : 'Задача'}] ${item.title}</option>`;
+            });
 
-            if (currentTab === 'notes') {
-                titleEl.innerText = 'Новая заметка';
+            if (currentTab === 'reminders') {
+                remOpts.style.display = 'block';
+                descEl.style.display = 'none';
+            } else {
+                remOpts.style.display = 'none';
                 descEl.style.display = 'block';
-                timeEl.style.display = 'none';
-                descEl.placeholder = "Текст заметки...";
-            } else if (currentTab === 'todos') {
-                titleEl.innerText = 'Новая задача';
-                descEl.style.display = 'block';
-                timeEl.style.display = 'none';
-                descEl.placeholder = "Детали задачи...";
-            } else if (currentTab === 'reminders') {
-                titleEl.innerText = 'Новое напоминание';
-                descEl.style.display = 'none'; // Скрываем описание
-                timeEl.style.display = 'block'; // Показываем выбор времени
             }
+
+            if (id !== null) {
+                // Режим редактирования
+                const item = appData[currentTab].find(i => i.id === id);
+                titleEl.value = item.title;
+                if (currentTab === 'reminders') {
+                    timeEl.value = item.time_str;
+                    attachEl.value = item.attached || "";
+                } else {
+                    descEl.value = item.desc;
+                }
+                btnDel.style.display = 'block';
+            } else {
+                // Режим создания
+                titleEl.value = ''; descEl.value = ''; timeEl.value = ''; attachEl.value = '';
+                btnDel.style.display = 'none';
+            }
+
+            modal.classList.add('open');
         }
 
-        function closeModal() {
-            document.getElementById('modal').style.display = 'none';
+        function closeEditor() {
+            document.getElementById('editor-modal').classList.remove('open');
         }
 
-        // Сохранение записи
+        // --- СОХРАНЕНИЕ ---
         function saveItem() {
-            const title = document.getElementById('input-title').value.trim();
-            const desc = document.getElementById('input-desc').value.trim();
-            const time = document.getElementById('input-time').value;
+            const title = document.getElementById('edit-title').value.trim();
+            if (!title) return tg.showAlert("Введите название!");
 
-            if (!title) {
-                tg.showAlert("Введите название!");
-                return;
-            }
-
-            // Формируем объект для отправки
-            // ДУБЛИРУЕМ переменные (name/title) на случай, если Lua-скрипт ждет старые данные
-            let dataObject = {
-                action: 'save_' + (currentTab === 'todos' ? 'todo' : currentTab === 'reminders' ? 'reminder' : 'note'),
+            const newItem = {
+                id: editingId !== null ? editingId : Date.now(),
+                type: currentTab === 'todos' ? 'todo' : currentTab === 'reminders' ? 'reminder' : 'note',
                 title: title,
-                name: title, // Дубликат для обратной совместимости 
-                desc: currentTab === 'reminders' ? time : desc,
-                text: currentTab === 'reminders' ? time : desc // Дубликат для обратной совместимости
+                date: new Date().toLocaleDateString()
             };
 
-            // 1. Сохраняем локально, чтобы видеть в приложении
-            appData[currentTab].push({ title: title, desc: dataObject.desc, date: new Date().toLocaleDateString() });
-            localStorage.setItem('myBotData', JSON.stringify(appData));
-
-            // 2. Отправляем данные боту (ЭТО ЗАКРОЕТ ПРИЛОЖЕНИЕ В ТГ)
-            if (tg.initDataUnsafe && Object.keys(tg.initDataUnsafe).length > 0) {
-                tg.sendData(JSON.stringify(dataObject));
+            if (currentTab === 'reminders') {
+                const timeStr = document.getElementById('edit-time').value;
+                if(!timeStr) return tg.showAlert("Выберите время!");
+                newItem.time_str = timeStr;
+                newItem.timestamp = new Date(timeStr).getTime() / 1000; // Unix time для Lua
+                newItem.attached = document.getElementById('edit-attach').value;
             } else {
-                // Если открыли в браузере для теста
-                closeModal();
+                newItem.desc = document.getElementById('edit-desc').value.trim();
+            }
+
+            // Обновляем массив
+            if (editingId !== null) {
+                const idx = appData[currentTab].findIndex(i => i.id === editingId);
+                appData[currentTab][idx] = newItem;
+            } else {
+                appData[currentTab].push(newItem);
+            }
+
+            saveDataToCloud();
+            closeEditor();
+            renderList();
+
+            // Отправляем данные Lua-боту для создания файлов/напоминаний
+            let luaAction = 'save_' + newItem.type;
+            tg.sendData(JSON.stringify({
+                action: luaAction,
+                title: newItem.title,
+                desc: newItem.desc || "",
+                timestamp: newItem.timestamp || 0,
+                attached: newItem.attached || ""
+            }));
+        }
+
+        // --- УДАЛЕНИЕ ---
+        function deleteItem() {
+            if(confirm("Точно удалить?")) {
+                appData[currentTab] = appData[currentTab].filter(i => i.id !== editingId);
+                saveDataToCloud();
+                closeEditor();
                 renderList();
             }
         }
 
-        // Отрисовка списков
+        // --- ОТРИСОВКА СПИСКОВ ---
         function renderList() {
             const container = document.getElementById(currentTab + '-list');
             const items = appData[currentTab];
             
+            container.innerHTML = '';
             if (items.length === 0) {
-                let text = currentTab === 'notes' ? "Нет заметок" : currentTab === 'todos' ? "Нет задач" : "Нет напоминаний";
-                let emoji = currentTab === 'notes' ? "📝" : currentTab === 'todos' ? "📋" : "⏰";
-                container.innerHTML = `<div class="empty-state"><div class="empty-icon">${emoji}</div><div>${text}</div></div>`;
+                container.innerHTML = `<div style="text-align:center; color:var(--hint); margin-top:50px;">Список пуст</div>`;
                 return;
             }
 
-            container.innerHTML = '';
-            items.reverse().forEach(item => {
-                let metaText = currentTab === 'reminders' ? `Сработает в: ${item.desc}` : `Создано: ${item.date}`;
-                let descHtml = currentTab === 'reminders' ? '' : `<div class="card-text">${item.desc}</div>`;
-                
+            items.slice().reverse().forEach(item => {
+                let extraHtml = '';
+                if (currentTab === 'reminders') {
+                    extraHtml = `
+                        <div class="card-meta">
+                            <span>Сработает: ${item.time_str.replace('T', ' ')}</span>
+                            <span class="countdown" id="cd-${item.id}">Считаем...</span>
+                        </div>
+                        ${item.attached ? `<div style="font-size:11px; color:var(--hint); margin-top:5px;">🔗 Прикреплено: ${item.attached}</div>` : ''}
+                    `;
+                } else {
+                    extraHtml = `<div class="card-text">${item.desc}</div><div class="card-meta">Изменено: ${item.date}</div>`;
+                }
+
                 container.innerHTML += `
-                    <div class="card">
+                    <div class="card" onclick="openEditor(${item.id})">
                         <div class="card-title">${item.title}</div>
-                        ${descHtml}
-                        <div class="card-meta">${metaText}</div>
+                        ${extraHtml}
                     </div>
                 `;
             });
-            items.reverse(); // Возвращаем массив в исходное состояние
         }
 
-        // Первичная отрисовка
-        renderList();
+        // --- ТАЙМЕРЫ ОБРАТНОГО ОТСЧЕТА ---
+        setInterval(() => {
+            if (currentTab !== 'reminders') return;
+            const now = Math.floor(Date.now() / 1000);
+            appData.reminders.forEach(item => {
+                const el = document.getElementById('cd-' + item.id);
+                if (el) {
+                    const diff = item.timestamp - now;
+                    if (diff <= 0) el.innerText = "⏰ Время вышло!";
+                    else {
+                        const d = Math.floor(diff / 86400);
+                        const h = Math.floor((diff % 86400) / 3600);
+                        const m = Math.floor((diff % 3600) / 60);
+                        const s = diff % 60;
+                        el.innerText = `Осталось: ${d}д ${h}ч ${m}м ${s}с`;
+                    }
+                }
+            });
+        }, 1000);
+
+        // --- КРАСИВЫЙ ФОН СО ЗВЕЗДАМИ (Canvas Animation) ---
+        const canvas = document.getElementById('starfield');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+        let stars = [];
+        for(let i=0; i<50; i++) stars.push({ x: Math.random()*canvas.width, y: Math.random()*canvas.height, size: Math.random()*2, speed: Math.random()*1+0.5 });
+        function animateStars() {
+            ctx.clearRect(0,0, canvas.width, canvas.height);
+            ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--accent');
+            stars.forEach(s => {
+                ctx.beginPath(); ctx.arc(s.x, s.y, s.size, 0, Math.PI*2); ctx.fill();
+                s.y += s.speed;
+                if(s.y > canvas.height) { s.y = 0; s.x = Math.random()*canvas.width; }
+            });
+            requestAnimationFrame(animateStars);
+        }
+        animateStars();
+
+        // Запуск
+        loadData();
     </script>
 </body>
 </html>
