@@ -3,137 +3,306 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Меню Бота</title>
+    <title>Мой Помощник</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    
     <style>
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body {
-            background-color: var(--tg-theme-bg-color, #1c1c1e);
-            color: var(--tg-theme-text-color, #ffffff);
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            margin: 0; padding: 20px;
+        :root {
+            --bg-color: var(--tg-theme-bg-color, #1c1c1e);
+            --secondary-bg: var(--tg-theme-secondary-bg-color, #2c2c2e);
+            --text-color: var(--tg-theme-text-color, #ffffff);
+            --hint-color: var(--tg-theme-hint-color, #98989d);
+            --accent-color: var(--tg-theme-button-color, #34c759);
+            --danger-color: #ff3b30;
         }
 
-        .header { text-align: center; font-size: 24px; font-weight: 700; margin: 10px 0; }
-        .subtitle { text-align: center; font-size: 14px; color: var(--tg-theme-hint-color, #98989d); margin-bottom: 20px; }
-
-        /* Экраны (Меню и Форма) */
-        #menu-screen { display: flex; flex-direction: column; gap: 15px; }
-        #note-screen { display: none; flex-direction: column; gap: 15px; } /* Скрыт по умолчанию */
-
-        /* Кнопки главного меню */
-        .menu-btn {
-            background-color: var(--tg-theme-secondary-bg-color, #2c2c2e);
-            color: var(--tg-theme-text-color, #ffffff);
-            border: none; border-radius: 14px; padding: 20px;
-            font-size: 18px; font-weight: 600;
-            display: flex; align-items: center; cursor: pointer;
-            width: 100%; text-align: left;
-        }
-        .menu-btn:active { transform: scale(0.96); opacity: 0.8; }
-        .icon { font-size: 28px; margin-right: 15px; background-color: var(--tg-theme-bg-color, #1c1c1e); padding: 10px; border-radius: 12px; }
-        .btn-text-container { display: flex; flex-direction: column; }
-        .btn-desc { font-size: 13px; font-weight: 400; color: var(--tg-theme-hint-color, #98989d); margin-top: 4px; }
-
-        /* Элементы формы ввода */
-        .input-field {
-            background-color: var(--tg-theme-secondary-bg-color, #2c2c2e);
-            color: var(--tg-theme-text-color, #ffffff);
-            border: 1px solid var(--tg-theme-hint-color, #98989d);
-            border-radius: 10px; padding: 15px; font-size: 16px;
-            width: 100%; outline: none;
-        }
-        .input-field::placeholder { color: var(--tg-theme-hint-color, #98989d); }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
         
-        /* Кнопки в форме */
-        .action-btn {
-            border: none; border-radius: 10px; padding: 15px; font-size: 16px; font-weight: 600;
-            cursor: pointer; width: 100%; text-align: center; color: white;
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding-bottom: 80px; /* Отступ для нижнего меню */
         }
-        .btn-save { background-color: #34c759; } /* Зеленая */
-        .btn-cancel { background-color: #ff3b30; } /* Красная */
+
+        /* Заголовки */
+        .header {
+            padding: 20px;
+            font-size: 28px;
+            font-weight: bold;
+            background-color: var(--bg-color);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            border-bottom: 1px solid var(--secondary-bg);
+        }
+
+        /* Контейнеры для контента (Вкладки) */
+        .tab-content { display: none; padding: 20px; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Карточки записей */
+        .card {
+            background-color: var(--secondary-bg);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .card-title { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
+        .card-text { font-size: 14px; color: var(--hint-color); white-space: pre-wrap; }
+        .card-meta { font-size: 12px; color: var(--accent-color); margin-top: 10px; font-weight: 500; }
+
+        /* Плавающая кнопка добавления (FAB) */
+        .fab {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            width: 56px;
+            height: 56px;
+            border-radius: 28px;
+            background-color: var(--accent-color);
+            color: #fff;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 28px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            cursor: pointer;
+            border: none;
+            transition: transform 0.1s;
+            z-index: 100;
+        }
+        .fab:active { transform: scale(0.9); }
+
+        /* Нижнее меню навигации */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0; width: 100%;
+            background-color: var(--secondary-bg);
+            display: flex; justify-content: space-around;
+            padding: 10px 0 20px 0;
+            border-top: 1px solid rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+        .nav-item {
+            display: flex; flex-direction: column; align-items: center;
+            color: var(--hint-color); cursor: pointer;
+            font-size: 12px; font-weight: 500; width: 33%;
+        }
+        .nav-item.active { color: var(--accent-color); }
+        .nav-icon { font-size: 24px; margin-bottom: 4px; }
+
+        /* Модальное окно (Форма ввода) */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); z-index: 200; justify-content: center; align-items: flex-end;
+        }
+        .modal-content {
+            background-color: var(--bg-color); width: 100%; border-radius: 20px 20px 0 0;
+            padding: 20px; animation: slideUp 0.3s ease;
+        }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        
+        .modal-title { font-size: 20px; font-weight: bold; margin-bottom: 15px; }
+        
+        .input-field {
+            width: 100%; background-color: var(--secondary-bg); color: var(--text-color);
+            border: none; border-radius: 12px; padding: 15px; margin-bottom: 15px;
+            font-size: 16px; outline: none; font-family: inherit;
+        }
+        
+        .btn-row { display: flex; gap: 10px; }
+        .btn {
+            flex: 1; padding: 15px; border-radius: 12px; border: none; font-size: 16px; font-weight: 600; cursor: pointer; color: #fff;
+        }
+        .btn-save { background-color: var(--accent-color); }
+        .btn-cancel { background-color: var(--secondary-bg); color: var(--text-color); }
+
+        /* Пустое состояние */
+        .empty-state { text-align: center; color: var(--hint-color); padding-top: 50px; }
+        .empty-icon { font-size: 48px; margin-bottom: 10px; opacity: 0.5; }
     </style>
 </head>
 <body>
 
-    <!-- ЭКРАН 1: ГЛАВНОЕ МЕНЮ -->
-    <div id="menu-screen">
-        <div class="header">Мой Помощник</div>
-        <div class="subtitle">Выберите нужное действие</div>
-
-        <button class="menu-btn" onclick="openNoteForm()">
-            <span class="icon">📝</span>
-            <div class="btn-text-container">
-                <span>Создать Заметку</span>
-                <span class="btn-desc">Ввести текст прямо здесь</span>
-            </div>
-        </button>
-
-        <button class="menu-btn" onclick="sendDevAction()">
-            <span class="icon">⏰</span>
-            <div class="btn-text-container">
-                <span>Напоминание</span>
-                <span class="btn-desc">В разработке</span>
-            </div>
-        </button>
+    <!-- Вкладка: Заметки -->
+    <div id="tab-notes" class="tab-content active">
+        <div class="header">📝 Заметки</div>
+        <div id="notes-list"></div>
     </div>
 
-    <!-- ЭКРАН 2: ФОРМА СОЗДАНИЯ ЗАМЕТКИ -->
-    <div id="note-screen">
-        <div class="header">Новая заметка</div>
-        
-        <input type="text" id="noteName" class="input-field" placeholder="Название (например: Пароли)">
-        <textarea id="noteText" class="input-field" placeholder="Введите текст заметки..." rows="6"></textarea>
+    <!-- Вкладка: Задачи -->
+    <div id="tab-todos" class="tab-content">
+        <div class="header">📋 Список дел</div>
+        <div id="todos-list"></div>
+    </div>
 
-        <button class="action-btn btn-save" onclick="saveNote()">Сохранить заметку</button>
-        <button class="action-btn btn-cancel" onclick="goBack()">Отмена</button>
+    <!-- Вкладка: Напоминания -->
+    <div id="tab-reminders" class="tab-content">
+        <div class="header">⏰ Напоминания</div>
+        <div id="reminders-list"></div>
+    </div>
+
+    <!-- Кнопка "Добавить" -->
+    <button class="fab" onclick="openModal()">+</button>
+
+    <!-- Форма создания (Модальное окно) -->
+    <div id="modal" class="modal-overlay">
+        <div class="modal-content">
+            <div id="modal-title" class="modal-title">Новая запись</div>
+            
+            <input type="text" id="input-title" class="input-field" placeholder="Название...">
+            
+            <!-- Поле для описания (Заметки/Задачи) -->
+            <textarea id="input-desc" class="input-field" placeholder="Описание..." rows="4"></textarea>
+            
+            <!-- Поле для времени (Только для напоминаний) -->
+            <input type="time" id="input-time" class="input-field" style="display: none;">
+
+            <div class="btn-row">
+                <button class="btn btn-cancel" onclick="closeModal()">Отмена</button>
+                <button class="btn btn-save" onclick="saveItem()">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Нижняя навигация -->
+    <div class="bottom-nav">
+        <div class="nav-item active" onclick="switchTab('notes', this)">
+            <span class="nav-icon">📝</span>
+            <span>Заметки</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('todos', this)">
+            <span class="nav-icon">📋</span>
+            <span>Задачи</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('reminders', this)">
+            <span class="nav-icon">⏰</span>
+            <span>Таймеры</span>
+        </div>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        // Переключение на экран создания заметки
-        function openNoteForm() {
-            document.getElementById('menu-screen').style.display = 'none';
-            document.getElementById('note-screen').style.display = 'flex';
+        let currentTab = 'notes';
+
+        // Инициализация данных (загрузка из памяти браузера/ТГ)
+        let appData = JSON.parse(localStorage.getItem('myBotData')) || {
+            notes: [], todos: [], reminders: []
+        };
+
+        // Переключение вкладок
+        function switchTab(tabName, element) {
+            currentTab = tabName;
+            
+            // Скрываем все вкладки
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            // Убираем выделение в меню
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            
+            // Показываем нужную вкладку
+            document.getElementById('tab-' + tabName).classList.add('active');
+            element.classList.add('active');
+
+            renderList();
         }
 
-        // Возврат в главное меню
-        function goBack() {
-            document.getElementById('note-screen').style.display = 'none';
-            document.getElementById('menu-screen').style.display = 'flex';
-            // Очищаем поля
-            document.getElementById('noteName').value = '';
-            document.getElementById('noteText').value = '';
+        // Открытие формы добавления
+        function openModal() {
+            document.getElementById('modal').style.display = 'flex';
+            document.getElementById('input-title').value = '';
+            document.getElementById('input-desc').value = '';
+            document.getElementById('input-time').value = '';
+
+            const titleEl = document.getElementById('modal-title');
+            const descEl = document.getElementById('input-desc');
+            const timeEl = document.getElementById('input-time');
+
+            if (currentTab === 'notes') {
+                titleEl.innerText = 'Новая заметка';
+                descEl.style.display = 'block';
+                timeEl.style.display = 'none';
+                descEl.placeholder = "Текст заметки...";
+            } else if (currentTab === 'todos') {
+                titleEl.innerText = 'Новая задача';
+                descEl.style.display = 'block';
+                timeEl.style.display = 'none';
+                descEl.placeholder = "Детали задачи...";
+            } else if (currentTab === 'reminders') {
+                titleEl.innerText = 'Новое напоминание';
+                descEl.style.display = 'none'; // Скрываем описание
+                timeEl.style.display = 'block'; // Показываем выбор времени
+            }
         }
 
-        // Функция сохранения (Отправка данных боту)
-        function saveNote() {
-            let name = document.getElementById('noteName').value.trim();
-            let text = document.getElementById('noteText').value.trim();
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+        }
 
-            if (name === "" || text === "") {
-                tg.showAlert("Пожалуйста, заполните оба поля!");
+        // Сохранение записи
+        function saveItem() {
+            const title = document.getElementById('input-title').value.trim();
+            const desc = document.getElementById('input-desc').value.trim();
+            const time = document.getElementById('input-time').value;
+
+            if (!title) {
+                tg.showAlert("Введите название!");
                 return;
             }
 
-            // Упаковываем данные в JSON объект
+            // Формируем объект для отправки
             let dataObject = {
-                action: "save_note",
-                name: name,
-                text: text
+                action: 'save_' + (currentTab === 'todos' ? 'todo' : currentTab === 'reminders' ? 'reminder' : 'note'),
+                title: title,
+                desc: currentTab === 'reminders' ? time : desc
             };
 
-            // Превращаем объект в строку и отправляем боту
-            tg.sendData(JSON.stringify(dataObject));
+            // 1. Сохраняем локально, чтобы видеть в приложении
+            appData[currentTab].push({ title: title, desc: dataObject.desc, date: new Date().toLocaleDateString() });
+            localStorage.setItem('myBotData', JSON.stringify(appData));
+
+            // 2. Отправляем данные боту (ЭТО ЗАКРОЕТ ПРИЛОЖЕНИЕ В ТГ)
+            if (tg.initDataUnsafe && Object.keys(tg.initDataUnsafe).length > 0) {
+                tg.sendData(JSON.stringify(dataObject));
+            } else {
+                // Если открыли в браузере для теста
+                closeModal();
+                renderList();
+            }
         }
 
-        // Заглушка для кнопок в разработке
-        function sendDevAction() {
-            tg.sendData(JSON.stringify({ action: "dev" }));
+        // Отрисовка списков
+        function renderList() {
+            const container = document.getElementById(currentTab + '-list');
+            const items = appData[currentTab];
+            
+            if (items.length === 0) {
+                let text = currentTab === 'notes' ? "Нет заметок" : currentTab === 'todos' ? "Нет задач" : "Нет напоминаний";
+                let emoji = currentTab === 'notes' ? "📝" : currentTab === 'todos' ? "📋" : "⏰";
+                container.innerHTML = `<div class="empty-state"><div class="empty-icon">${emoji}</div><div>${text}</div></div>`;
+                return;
+            }
+
+            container.innerHTML = '';
+            items.reverse().forEach(item => {
+                let metaText = currentTab === 'reminders' ? `Сработает в: ${item.desc}` : `Создано: ${item.date}`;
+                let descHtml = currentTab === 'reminders' ? '' : `<div class="card-text">${item.desc}</div>`;
+                
+                container.innerHTML += `
+                    <div class="card">
+                        <div class="card-title">${item.title}</div>
+                        ${descHtml}
+                        <div class="card-meta">${metaText}</div>
+                    </div>
+                `;
+            });
+            items.reverse(); // Возвращаем массив в исходное состояние
         }
+
+        // Первичная отрисовка
+        renderList();
     </script>
 </body>
 </html>
