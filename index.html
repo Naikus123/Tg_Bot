@@ -341,6 +341,141 @@
             background: var(--surface2); border: 1px solid var(--border);
             border-radius: 8px; padding: 3px 8px; margin-top: 7px;
         }
+
+        /* ===== CUSTOM PICKERS ===== */
+        .custom-field {
+            display: flex; align-items: center; gap: 10px;
+            background: var(--surface2); border: 1px solid var(--border);
+            border-radius: 14px; padding: 14px 16px; margin-bottom: 12px;
+            cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s;
+            color: var(--hint); font-size: 15px; font-family: 'Exo 2', sans-serif;
+            user-select: none;
+        }
+        .custom-field:active { border-color: var(--accent); box-shadow: 0 0 14px var(--glow); }
+        .custom-field.filled { color: var(--text); border-color: rgba(255,255,255,0.15); }
+        .custom-field span { flex: 1; }
+        .field-arrow { margin-left: auto; opacity: 0.5; }
+
+        /* Attach dropdown */
+        .custom-dropdown {
+            background: var(--surface2); border: 1px solid var(--border);
+            border-radius: 14px; overflow: hidden; margin-bottom: 12px;
+            animation: fadeSlide 0.2s ease;
+        }
+        .dropdown-item {
+            padding: 13px 16px; font-size: 14px; color: var(--text);
+            cursor: pointer; display: flex; align-items: center; gap: 10px;
+            border-bottom: 1px solid var(--border); transition: background 0.15s;
+        }
+        .dropdown-item:last-child { border-bottom: none; }
+        .dropdown-item:active { background: var(--surface); }
+        .dropdown-item.selected { color: var(--accent); }
+        .dropdown-item .item-badge {
+            font-size: 10px; letter-spacing: 1px; color: var(--hint);
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 6px; padding: 2px 6px;
+        }
+
+        /* Picker overlays */
+        .picker-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(10px); z-index: 500;
+            display: flex; align-items: flex-end; justify-content: center;
+        }
+        .picker-sheet {
+            background: linear-gradient(180deg, var(--surface) 0%, var(--bg) 100%);
+            border: 1px solid var(--border); border-bottom: none;
+            border-radius: 24px 24px 0 0; width: 100%; padding: 24px;
+            animation: slideUp 0.3s cubic-bezier(0.16,1,0.3,1);
+        }
+        .picker-title {
+            font-family: 'Orbitron', monospace; font-size: 13px; font-weight: 700;
+            letter-spacing: 3px; color: var(--accent);
+            text-shadow: 0 0 10px var(--glow); text-align: center; margin-bottom: 20px;
+        }
+        .picker-btn-row { display: flex; gap: 10px; margin-top: 20px; }
+
+        /* ===== CALENDAR ===== */
+        .cal-nav {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 16px;
+        }
+        .cal-nav-btn {
+            background: var(--surface2); border: 1px solid var(--border);
+            border-radius: 10px; padding: 8px 12px; color: var(--text);
+            cursor: pointer; transition: 0.15s;
+        }
+        .cal-nav-btn:active { background: var(--accent); color: #fff; border-color: var(--accent); }
+        .cal-month-label {
+            font-family: 'Orbitron', monospace; font-size: 13px;
+            color: var(--text); letter-spacing: 1px;
+        }
+        .cal-weekdays {
+            display: grid; grid-template-columns: repeat(7, 1fr);
+            text-align: center; margin-bottom: 8px;
+        }
+        .cal-weekdays span {
+            font-size: 11px; color: var(--hint); font-weight: 600;
+            letter-spacing: 0.5px; padding: 4px 0;
+        }
+        .cal-grid {
+            display: grid; grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+        }
+        .cal-day {
+            aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+            border-radius: 10px; font-size: 14px; cursor: pointer;
+            transition: 0.15s; color: var(--text); font-family: 'Exo 2', sans-serif;
+        }
+        .cal-day:active { background: var(--surface2); }
+        .cal-day.empty { cursor: default; }
+        .cal-day.other-month { color: var(--hint); opacity: 0.4; }
+        .cal-day.today { color: var(--accent); font-weight: 700; }
+        .cal-day.today::after {
+            content: ''; position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%);
+            width: 4px; height: 4px; border-radius: 50%; background: var(--accent);
+        }
+        .cal-day { position: relative; }
+        .cal-day.selected {
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            color: #fff; box-shadow: 0 0 12px var(--glow); font-weight: 700;
+        }
+        .cal-day.past { opacity: 0.3; cursor: default; }
+
+        /* ===== DRUM TIME PICKER ===== */
+        .time-picker-wrap {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            height: 220px;
+        }
+        .drum-col { display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 1; }
+        .drum-label { font-size: 10px; letter-spacing: 2px; color: var(--hint); text-transform: uppercase; }
+        .drum-sep {
+            font-size: 32px; font-family: 'Orbitron', monospace;
+            color: var(--accent); margin-top: 16px; opacity: 0.7;
+        }
+        .drum {
+            flex: 1; width: 100%; overflow-y: scroll; scroll-snap-type: y mandatory;
+            border-radius: 16px; background: var(--surface2); border: 1px solid var(--border);
+            position: relative; scrollbar-width: none;
+        }
+        .drum::-webkit-scrollbar { display: none; }
+        .drum::before, .drum::after {
+            content: ''; position: sticky; display: block; height: 72px; z-index: 2;
+            pointer-events: none;
+        }
+        .drum::before { top: 0; background: linear-gradient(to bottom, var(--surface2), transparent); }
+        .drum::after { bottom: 0; background: linear-gradient(to top, var(--surface2), transparent); }
+        .drum-selector {
+            position: absolute; top: 50%; left: 0; right: 0; height: 48px;
+            transform: translateY(-50%); border-top: 1px solid var(--accent);
+            border-bottom: 1px solid var(--accent);
+            box-shadow: 0 0 12px var(--glow); pointer-events: none; z-index: 1;
+        }
+        .drum-item {
+            height: 48px; display: flex; align-items: center; justify-content: center;
+            scroll-snap-align: center; font-size: 24px; font-family: 'Orbitron', monospace;
+            color: var(--hint); transition: color 0.15s; font-weight: 700;
+        }
     </style>
 </head>
 <body>
@@ -446,11 +581,24 @@
 
             <div id="reminder-options" style="display: none;">
                 <label class="field-label">Дата и время</label>
-                <input type="datetime-local" step="1" id="edit-time" class="input-field">
+                <div class="custom-field" id="date-display" onclick="openCalendar()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    <span id="date-display-text">Выбрать дату</span>
+                    <svg class="field-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                <div class="custom-field" id="time-display" onclick="openTimePicker()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    <span id="time-display-text">Выбрать время</span>
+                    <svg class="field-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+
                 <label class="field-label">Прикрепить заметку / задачу</label>
-                <select id="edit-attach" class="input-field">
-                    <option value="">— Без привязки —</option>
-                </select>
+                <div class="custom-field" id="attach-display" onclick="toggleAttachDropdown()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                    <span id="attach-display-text">— Без привязки —</span>
+                    <svg class="field-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                <div id="attach-dropdown" class="custom-dropdown" style="display:none;"></div>
             </div>
 
             <div class="btn-row">
@@ -461,6 +609,57 @@
                 </button>
                 <button class="btn btn-cancel" onclick="closeEditor()">Отмена</button>
                 <button class="btn btn-save" onclick="saveItem()">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CALENDAR OVERLAY -->
+    <div id="calendar-overlay" class="picker-overlay" style="display:none;">
+        <div class="picker-sheet">
+            <div class="picker-title">ВЫБОР ДАТЫ</div>
+            <div class="cal-nav">
+                <button class="cal-nav-btn" onclick="calNav(-1)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
+                <span id="cal-month-label" class="cal-month-label"></span>
+                <button class="cal-nav-btn" onclick="calNav(1)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>
+            </div>
+            <div class="cal-weekdays">
+                <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span>
+                <span style="color:var(--accent)">Сб</span><span style="color:var(--accent)">Вс</span>
+            </div>
+            <div id="cal-grid" class="cal-grid"></div>
+            <div class="picker-btn-row">
+                <button class="btn btn-cancel" onclick="closeCalendar()">Отмена</button>
+                <button class="btn btn-save" onclick="confirmCalendar()">Выбрать</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TIME PICKER OVERLAY -->
+    <div id="time-overlay" class="picker-overlay" style="display:none;">
+        <div class="picker-sheet">
+            <div class="picker-title">ВЫБОР ВРЕМЕНИ</div>
+            <div class="time-picker-wrap">
+                <div class="drum-col">
+                    <div class="drum-label">Часы</div>
+                    <div class="drum" id="drum-h">
+                        <div class="drum-selector"></div>
+                    </div>
+                </div>
+                <div class="drum-sep">:</div>
+                <div class="drum-col">
+                    <div class="drum-label">Минуты</div>
+                    <div class="drum" id="drum-m">
+                        <div class="drum-selector"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="picker-btn-row">
+                <button class="btn btn-cancel" onclick="closeTimePicker()">Отмена</button>
+                <button class="btn btn-save" onclick="confirmTime()">Выбрать</button>
             </div>
         </div>
     </div>
@@ -556,25 +755,268 @@
             renderList();
         }
 
+        // ===== CUSTOM PICKER STATE =====
+        let pickerDate = null;   // { year, month, day }
+        let pickerTime = null;   // { h, m }
+        let pickerAttach = '';
+        let calViewYear, calViewMonth;
+
+        function getPickerDateTimeString() {
+            if (!pickerDate || !pickerTime) return null;
+            const y = pickerDate.year;
+            const mo = String(pickerDate.month + 1).padStart(2,'0');
+            const d = String(pickerDate.day).padStart(2,'0');
+            const h = String(pickerTime.h).padStart(2,'0');
+            const m = String(pickerTime.m).padStart(2,'0');
+            return `${y}-${mo}-${d}T${h}:${m}`;
+        }
+
+        function updateDateDisplay() {
+            const el = document.getElementById('date-display');
+            const txt = document.getElementById('date-display-text');
+            if (pickerDate) {
+                const months = ['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'];
+                const wdays = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+                const d = new Date(pickerDate.year, pickerDate.month, pickerDate.day);
+                const wd = (d.getDay() + 6) % 7;
+                txt.textContent = `${wdays[wd]}, ${pickerDate.day} ${months[pickerDate.month]} ${pickerDate.year}`;
+                el.classList.add('filled');
+            } else {
+                txt.textContent = 'Выбрать дату';
+                el.classList.remove('filled');
+            }
+        }
+
+        function updateTimeDisplay() {
+            const el = document.getElementById('time-display');
+            const txt = document.getElementById('time-display-text');
+            if (pickerTime) {
+                txt.textContent = `${String(pickerTime.h).padStart(2,'0')}:${String(pickerTime.m).padStart(2,'0')}`;
+                el.classList.add('filled');
+            } else {
+                txt.textContent = 'Выбрать время';
+                el.classList.remove('filled');
+            }
+        }
+
+        // ===== CALENDAR =====
+        let calSelected = null; // {year,month,day}
+
+        function openCalendar() {
+            const now = new Date();
+            calViewYear  = pickerDate ? pickerDate.year  : now.getFullYear();
+            calViewMonth = pickerDate ? pickerDate.month : now.getMonth();
+            calSelected  = pickerDate ? {...pickerDate} : null;
+            renderCalendar();
+            document.getElementById('calendar-overlay').style.display = 'flex';
+        }
+        function closeCalendar() { document.getElementById('calendar-overlay').style.display = 'none'; }
+        function confirmCalendar() {
+            if (!calSelected) { tg.showAlert('Выберите дату!'); return; }
+            pickerDate = {...calSelected};
+            updateDateDisplay();
+            closeCalendar();
+        }
+        function calNav(dir) {
+            calViewMonth += dir;
+            if (calViewMonth < 0) { calViewMonth = 11; calViewYear--; }
+            if (calViewMonth > 11) { calViewMonth = 0; calViewYear++; }
+            renderCalendar();
+        }
+        function renderCalendar() {
+            const MONTHS = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+            document.getElementById('cal-month-label').textContent = `${MONTHS[calViewMonth]} ${calViewYear}`;
+            const grid = document.getElementById('cal-grid');
+            grid.innerHTML = '';
+            const now = new Date(); now.setHours(0,0,0,0);
+
+            // First weekday of month (Mon=0)
+            const firstDay = new Date(calViewYear, calViewMonth, 1);
+            let startWd = (firstDay.getDay() + 6) % 7; // 0=Mon
+
+            const daysInMonth = new Date(calViewYear, calViewMonth + 1, 0).getDate();
+            const prevDays = new Date(calViewYear, calViewMonth, 0).getDate();
+
+            let cells = [];
+            // Previous month filler
+            for (let i = startWd - 1; i >= 0; i--) {
+                cells.push({ day: prevDays - i, month: calViewMonth - 1, year: calViewYear, cls: 'other-month' });
+            }
+            // Current month
+            for (let d = 1; d <= daysInMonth; d++) {
+                const date = new Date(calViewYear, calViewMonth, d);
+                const isPast = date < now;
+                const isToday = date.getTime() === now.getTime();
+                const isSel = calSelected && calSelected.year === calViewYear && calSelected.month === calViewMonth && calSelected.day === d;
+                let cls = '';
+                if (isPast) cls = 'past';
+                else if (isSel) cls = 'selected';
+                else if (isToday) cls = 'today';
+                cells.push({ day: d, month: calViewMonth, year: calViewYear, cls });
+            }
+            // Next month filler
+            let rem = 7 - (cells.length % 7);
+            if (rem === 7) rem = 0;
+            for (let i = 1; i <= rem; i++) {
+                cells.push({ day: i, month: calViewMonth + 1, year: calViewYear, cls: 'other-month' });
+            }
+
+            cells.forEach(c => {
+                const el = document.createElement('div');
+                el.className = 'cal-day ' + (c.cls || '');
+                el.textContent = c.day;
+                if (!c.cls.includes('past') && !c.cls.includes('other-month')) {
+                    el.onclick = () => {
+                        calSelected = { year: c.year, month: c.month, day: c.day };
+                        renderCalendar();
+                    };
+                } else if (c.cls === 'other-month') {
+                    el.onclick = () => {
+                        calViewMonth = c.month; calViewYear = c.year;
+                        if (calViewMonth < 0) { calViewMonth = 11; calViewYear--; }
+                        if (calViewMonth > 11) { calViewMonth = 0; calViewYear++; }
+                        calSelected = { year: c.year, month: c.month < 0 ? 11 : c.month > 11 ? 0 : c.month, day: c.day };
+                        renderCalendar();
+                    };
+                }
+                grid.appendChild(el);
+            });
+        }
+
+        // ===== DRUM TIME PICKER =====
+        const ITEM_H = 48;
+
+        function buildDrum(id, count, pad) {
+            const drum = document.getElementById(id);
+            // Keep selector div, rebuild items
+            drum.innerHTML = '<div class="drum-selector"></div>';
+            // Padding top/bottom ghost items so center item is selectable
+            for (let p = 0; p < 2; p++) {
+                const ghost = document.createElement('div');
+                ghost.className = 'drum-item';
+                drum.appendChild(ghost);
+            }
+            for (let i = 0; i < count; i++) {
+                const item = document.createElement('div');
+                item.className = 'drum-item';
+                item.textContent = String(i).padStart(pad ? 2 : 1, '0');
+                drum.appendChild(item);
+            }
+            for (let p = 0; p < 2; p++) {
+                const ghost = document.createElement('div');
+                ghost.className = 'drum-item';
+                drum.appendChild(ghost);
+            }
+        }
+
+        function scrollDrumTo(id, value) {
+            const drum = document.getElementById(id);
+            // 2 ghost items offset
+            drum.scrollTop = value * ITEM_H;
+        }
+
+        function getDrumValue(id) {
+            const drum = document.getElementById(id);
+            return Math.round(drum.scrollTop / ITEM_H);
+        }
+
+        function highlightDrums() {
+            ['drum-h','drum-m'].forEach(id => {
+                const drum = document.getElementById(id);
+                const val = getDrumValue(id);
+                drum.querySelectorAll('.drum-item').forEach((el, idx) => {
+                    // idx 0,1 are ghost; real items start at idx 2
+                    el.style.color = (idx - 2 === val) ? 'var(--text)' : 'var(--hint)';
+                    el.style.fontSize = (idx - 2 === val) ? '26px' : '20px';
+                });
+            });
+        }
+
+        function openTimePicker() {
+            buildDrum('drum-h', 24, true);
+            buildDrum('drum-m', 60, true);
+            const h = pickerTime ? pickerTime.h : new Date().getHours();
+            const m = pickerTime ? pickerTime.m : 0;
+            document.getElementById('time-overlay').style.display = 'flex';
+            setTimeout(() => {
+                scrollDrumTo('drum-h', h);
+                scrollDrumTo('drum-m', m);
+                highlightDrums();
+                ['drum-h','drum-m'].forEach(id => {
+                    document.getElementById(id).addEventListener('scroll', highlightDrums);
+                });
+            }, 50);
+        }
+
+        function closeTimePicker() { document.getElementById('time-overlay').style.display = 'none'; }
+
+        function confirmTime() {
+            const h = getDrumValue('drum-h');
+            const m = getDrumValue('drum-m');
+            pickerTime = { h, m };
+            updateTimeDisplay();
+            closeTimePicker();
+        }
+
+        // ===== ATTACH DROPDOWN =====
+        let attachDropdownOpen = false;
+
+        function buildAttachDropdown() {
+            const dd = document.getElementById('attach-dropdown');
+            const items = [...appData.notes, ...appData.todos];
+            dd.innerHTML = '';
+
+            const noneItem = document.createElement('div');
+            noneItem.className = 'dropdown-item' + (pickerAttach === '' ? ' selected' : '');
+            noneItem.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/></svg> — Без привязки —`;
+            noneItem.onclick = () => selectAttach('', '— Без привязки —');
+            dd.appendChild(noneItem);
+
+            items.forEach(item => {
+                const badge = item.type === 'note' ? 'Заметка' : 'Задача';
+                const el = document.createElement('div');
+                el.className = 'dropdown-item' + (pickerAttach === item.title ? ' selected' : '');
+                el.innerHTML = `<span class="item-badge">${badge}</span> ${item.title}`;
+                el.onclick = () => selectAttach(item.title, `[${badge}] ${item.title}`);
+                dd.appendChild(el);
+            });
+        }
+
+        function selectAttach(value, label) {
+            pickerAttach = value;
+            const txt = document.getElementById('attach-display-text');
+            const el = document.getElementById('attach-display');
+            txt.textContent = label;
+            el.classList.toggle('filled', value !== '');
+            toggleAttachDropdown();
+        }
+
+        function toggleAttachDropdown() {
+            const dd = document.getElementById('attach-dropdown');
+            attachDropdownOpen = !attachDropdownOpen;
+            if (attachDropdownOpen) {
+                buildAttachDropdown();
+                dd.style.display = 'block';
+            } else {
+                dd.style.display = 'none';
+            }
+        }
+
         // ===== EDITOR =====
         function openEditor(id = null) {
             editingId = id;
             const modal = document.getElementById('editor-modal');
             const titleEl = document.getElementById('edit-title');
             const descEl = document.getElementById('edit-desc');
-            const timeEl = document.getElementById('edit-time');
-            const attachEl = document.getElementById('edit-attach');
             const remOpts = document.getElementById('reminder-options');
             const descBlock = document.getElementById('desc-block');
             const btnDel = document.getElementById('btn-delete');
             const modalTitle = document.getElementById('modal-title');
 
-            // Populate attach dropdown
-            attachEl.innerHTML = '<option value="">— Без привязки —</option>';
-            [...appData.notes, ...appData.todos].forEach(item => {
-                const label = item.type === 'note' ? 'Заметка' : 'Задача';
-                attachEl.innerHTML += `<option value="${item.title}">[${label}] ${item.title}</option>`;
-            });
+            // Reset picker state
+            pickerDate = null; pickerTime = null; pickerAttach = '';
+            attachDropdownOpen = false;
+            document.getElementById('attach-dropdown').style.display = 'none';
 
             if (currentTab === 'reminders') {
                 remOpts.style.display = 'block';
@@ -593,16 +1035,28 @@
                 if (!item) return;
                 titleEl.value = item.title || '';
                 if (currentTab === 'reminders') {
-                    timeEl.value = item.time_str || '';
-                    attachEl.value = item.attached || '';
+                    if (item.time_str) {
+                        const dt = new Date(item.time_str);
+                        pickerDate = { year: dt.getFullYear(), month: dt.getMonth(), day: dt.getDate() };
+                        pickerTime = { h: dt.getHours(), m: dt.getMinutes() };
+                    }
+                    pickerAttach = item.attached || '';
+                    const attachLabel = pickerAttach
+                        ? (() => { const found = [...appData.notes,...appData.todos].find(x=>x.title===pickerAttach); return found ? `[${found.type==='note'?'Заметка':'Задача'}] ${found.title}` : pickerAttach; })()
+                        : '— Без привязки —';
+                    document.getElementById('attach-display-text').textContent = attachLabel;
+                    document.getElementById('attach-display').classList.toggle('filled', !!pickerAttach);
                 } else {
                     descEl.value = item.desc || '';
                 }
                 btnDel.style.display = 'flex';
             } else {
-                titleEl.value = ''; descEl.value = ''; timeEl.value = ''; attachEl.value = '';
+                titleEl.value = ''; descEl.value = '';
                 btnDel.style.display = 'none';
             }
+
+            updateDateDisplay();
+            updateTimeDisplay();
 
             modal.classList.add('open');
             setTimeout(() => titleEl.focus(), 400);
@@ -625,11 +1079,12 @@
             };
 
             if (currentTab === 'reminders') {
-                const timeStr = document.getElementById('edit-time').value;
-                if (!timeStr) { tg.showAlert("Выберите дату и время!"); return; }
+                if (!pickerDate) { tg.showAlert("Выберите дату!"); return; }
+                if (!pickerTime) { tg.showAlert("Выберите время!"); return; }
+                const timeStr = getPickerDateTimeString();
                 newItem.time_str = timeStr;
                 newItem.timestamp = Math.floor(new Date(timeStr).getTime() / 1000);
-                newItem.attached = document.getElementById('edit-attach').value;
+                newItem.attached = pickerAttach;
             } else {
                 newItem.desc = document.getElementById('edit-desc').value.trim();
             }
@@ -737,12 +1192,18 @@
             });
         }, 1000);
 
-        // ===== STARFIELD =====
-        let stars = [];
+        // ===== STARFIELD — REALISTIC METEOR SHOWER =====
         let starAnimId;
 
         function getAccentColor() {
             return getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#00d4ff';
+        }
+
+        function hexToRgb(hex) {
+            hex = hex.replace('#','');
+            if (hex.length === 3) hex = hex.split('').map(c=>c+c).join('');
+            const n = parseInt(hex, 16);
+            return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
         }
 
         function initStars() {
@@ -751,147 +1212,218 @@
             const ctx = canvas.getContext('2d');
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
+            const W = canvas.width, H = canvas.height;
 
-            stars = [];
-            const accentColor = getAccentColor();
-
-            // Side-shooting stars (left and right edges)
-            for (let i = 0; i < 80; i++) {
-                stars.push({
-                    // Distribute along height, spawn from left or right
-                    x: Math.random() < 0.5 ? -10 : canvas.width + 10,
-                    y: Math.random() * canvas.height,
-                    size: Math.random() * 1.5 + 0.3,
-                    speed: Math.random() * 1.2 + 0.4,
-                    dirX: 0,
-                    dirY: Math.random() * 0.6 + 0.2,
-                    opacity: Math.random() * 0.6 + 0.4,
+            // --- Static background stars ---
+            const bgStars = [];
+            for (let i = 0; i < 220; i++) {
+                bgStars.push({
+                    x: Math.random() * W,
+                    y: Math.random() * H,
+                    r: Math.random() * 1.2 + 0.2,
+                    alpha: Math.random() * 0.6 + 0.15,
                     pulse: Math.random() * Math.PI * 2,
-                    type: 'side'
+                    pulseSpeed: Math.random() * 0.02 + 0.005,
+                    // Some are blue-white, some warm
+                    hue: Math.random() < 0.3 ? [180,220,255] : [255,255,255]
                 });
             }
 
-            // Center falling stars
-            for (let i = 0; i < 60; i++) {
-                stars.push({
-                    x: Math.random() * canvas.width,
-                    y: Math.random() * canvas.height,
-                    size: Math.random() * 1.2 + 0.2,
-                    speed: Math.random() * 0.8 + 0.2,
-                    dirX: (Math.random() - 0.5) * 0.3,
-                    dirY: 1,
-                    opacity: Math.random() * 0.5 + 0.2,
-                    pulse: Math.random() * Math.PI * 2,
-                    type: 'fall'
-                });
+            // --- Radiant point (top-left area, like in photo) ---
+            const radiantX = W * 0.15;
+            const radiantY = H * 0.10;
+
+            // --- Meteors ---
+            // All meteors diverge FROM the radiant point outward (parallel-ish, like Leonids)
+            function createMeteor(immediate = false) {
+                // Spread angle: mostly going down-right, some variation
+                const baseAngle = Math.PI * 0.30; // ~54° from horizontal
+                const spread = (Math.random() - 0.5) * 0.22;
+                const angle = baseAngle + spread;
+
+                // Travel distance across screen
+                const dist = (Math.random() * 0.5 + 0.6) * Math.sqrt(W*W + H*H);
+
+                // Start near radiant with offset so they look parallel
+                const offset = (Math.random() - 0.5) * W * 1.2;
+                const perpX = Math.cos(angle + Math.PI/2);
+                const perpY = Math.sin(angle + Math.PI/2);
+
+                const sx = radiantX + perpX * offset;
+                const sy = radiantY + perpY * offset;
+                const ex = sx + Math.cos(angle) * dist;
+                const ey = sy + Math.sin(angle) * dist;
+
+                const speed = Math.random() * 2.5 + 1.8; // px per frame
+                const length = Math.random() * 180 + 80; // tail length px
+                const width = Math.random() * 1.2 + 0.5;
+                const brightness = Math.random() * 0.5 + 0.5;
+
+                // Green-yellow core like real meteors, with accent tint
+                const useGreen = Math.random() < 0.6;
+
+                return {
+                    sx, sy, ex, ey,
+                    angle,
+                    dx: Math.cos(angle),
+                    dy: Math.sin(angle),
+                    // current head position
+                    hx: sx, hy: sy,
+                    speed,
+                    length,
+                    width,
+                    brightness,
+                    useGreen,
+                    // total travel
+                    totalDist: dist,
+                    traveled: immediate ? Math.random() * dist : 0,
+                    // fade in/out
+                    alive: true
+                };
             }
 
-            // Shooting stars (rare, fast)
-            let shootingStars = [];
-            for (let i = 0; i < 3; i++) {
-                shootingStars.push(createShootingStar(canvas));
+            const meteors = [];
+            // Start with some already mid-flight
+            for (let i = 0; i < 7; i++) meteors.push(createMeteor(true));
+
+            // Spawn new ones over time
+            let spawnTimer = 0;
+
+            function drawBgStar(s) {
+                s.pulse += s.pulseSpeed;
+                const a = s.alpha * (0.7 + 0.3 * Math.sin(s.pulse));
+                const [r,g,b] = s.hue;
+                // Subtle cross/sparkle for bright ones
+                if (s.r > 0.9) {
+                    ctx.save();
+                    ctx.globalAlpha = a * 0.4;
+                    ctx.strokeStyle = `rgb(${r},${g},${b})`;
+                    ctx.lineWidth = 0.5;
+                    const arm = s.r * 3;
+                    ctx.beginPath(); ctx.moveTo(s.x - arm, s.y); ctx.lineTo(s.x + arm, s.y); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(s.x, s.y - arm); ctx.lineTo(s.x, s.y + arm); ctx.stroke();
+                    ctx.restore();
+                }
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+                ctx.fillStyle = `rgba(${r},${g},${b},${a})`;
+                ctx.fill();
             }
 
-            function hexToRgb(hex) {
-                hex = hex.replace('#','');
-                if (hex.length === 3) hex = hex.split('').map(c=>c+c).join('');
-                const n = parseInt(hex, 16);
-                return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+            function drawMeteor(m) {
+                m.traveled += m.speed;
+                m.hx = m.sx + m.dx * m.traveled;
+                m.hy = m.sy + m.dy * m.traveled;
+
+                // Check if off screen enough
+                if (m.traveled > m.totalDist + m.length) {
+                    m.alive = false;
+                    return;
+                }
+
+                // Tail start (behind head)
+                const tailLen = Math.min(m.length, m.traveled);
+                const tx = m.hx - m.dx * tailLen;
+                const ty = m.hy - m.dy * tailLen;
+
+                // Fade based on position (fade in at start, fade out near end)
+                const progress = m.traveled / m.totalDist;
+                let masterAlpha = m.brightness;
+                if (progress < 0.08) masterAlpha *= progress / 0.08;
+                if (progress > 0.75) masterAlpha *= Math.max(0, 1 - (progress - 0.75) / 0.25);
+
+                const accent = getAccentColor();
+                const accentRgb = hexToRgb(accent);
+
+                // === OUTER WIDE GLOW (diffuse) ===
+                const outerGrad = ctx.createLinearGradient(tx, ty, m.hx, m.hy);
+                outerGrad.addColorStop(0, `rgba(${accentRgb[0]},${accentRgb[1]},${accentRgb[2]},0)`);
+                outerGrad.addColorStop(0.6, `rgba(${accentRgb[0]},${accentRgb[1]},${accentRgb[2]},${masterAlpha * 0.12})`);
+                outerGrad.addColorStop(1, `rgba(200,230,255,${masterAlpha * 0.15})`);
+
+                ctx.save();
+                ctx.lineWidth = m.width * 12;
+                ctx.strokeStyle = outerGrad;
+                ctx.lineCap = 'round';
+                ctx.globalCompositeOperation = 'screen';
+                ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(m.hx, m.hy); ctx.stroke();
+
+                // === MID GLOW (green-yellow like real meteors) ===
+                const midGrad = ctx.createLinearGradient(tx, ty, m.hx, m.hy);
+                midGrad.addColorStop(0, `rgba(0,0,0,0)`);
+                if (m.useGreen) {
+                    midGrad.addColorStop(0.5, `rgba(120,220,80,${masterAlpha * 0.35})`);
+                    midGrad.addColorStop(0.85, `rgba(200,255,100,${masterAlpha * 0.55})`);
+                    midGrad.addColorStop(1, `rgba(255,255,220,${masterAlpha * 0.8})`);
+                } else {
+                    midGrad.addColorStop(0.5, `rgba(${accentRgb[0]},${accentRgb[1]},${accentRgb[2]},${masterAlpha * 0.4})`);
+                    midGrad.addColorStop(1, `rgba(255,255,255,${masterAlpha * 0.8})`);
+                }
+                ctx.lineWidth = m.width * 4;
+                ctx.strokeStyle = midGrad;
+                ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(m.hx, m.hy); ctx.stroke();
+
+                // === CORE (bright white center) ===
+                const coreGrad = ctx.createLinearGradient(tx, ty, m.hx, m.hy);
+                coreGrad.addColorStop(0, `rgba(255,255,255,0)`);
+                coreGrad.addColorStop(0.7, `rgba(255,255,255,${masterAlpha * 0.6})`);
+                coreGrad.addColorStop(1, `rgba(255,255,255,${masterAlpha})`);
+                ctx.lineWidth = m.width * 0.8;
+                ctx.strokeStyle = coreGrad;
+                ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(m.hx, m.hy); ctx.stroke();
+
+                // === HEAD FLARE ===
+                const hGrad = ctx.createRadialGradient(m.hx, m.hy, 0, m.hx, m.hy, m.width * 7);
+                hGrad.addColorStop(0, `rgba(255,255,255,${masterAlpha * 0.95})`);
+                hGrad.addColorStop(0.3, m.useGreen
+                    ? `rgba(160,255,100,${masterAlpha * 0.5})`
+                    : `rgba(${accentRgb[0]},${accentRgb[1]},${accentRgb[2]},${masterAlpha * 0.5})`);
+                hGrad.addColorStop(1, `rgba(0,0,0,0)`);
+                ctx.beginPath(); ctx.arc(m.hx, m.hy, m.width * 7, 0, Math.PI*2);
+                ctx.fillStyle = hGrad; ctx.fill();
+
+                ctx.restore();
             }
 
             function animate() {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                const accent = getAccentColor();
-                const rgb = hexToRgb(accent);
+                // Deep space background
+                ctx.fillStyle = 'rgba(5, 8, 16, 0.18)';
+                ctx.fillRect(0, 0, W, H);
 
-                // Regular stars
-                stars.forEach(s => {
-                    s.pulse += 0.03;
-                    const glow = Math.sin(s.pulse) * 0.4 + 0.6;
-                    const alpha = s.opacity * glow;
+                // Background stars
+                ctx.globalCompositeOperation = 'source-over';
+                bgStars.forEach(drawBgStar);
 
-                    // Neon glow layers
-                    const gradient = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.size * 5);
-                    gradient.addColorStop(0, `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${alpha})`);
-                    gradient.addColorStop(0.4, `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${alpha * 0.4})`);
-                    gradient.addColorStop(1, `rgba(${rgb[0]},${rgb[1]},${rgb[2]},0)`);
+                // Subtle nebula in top-left corner like in photo
+                const nebula = ctx.createRadialGradient(W*0.1, H*0.15, 0, W*0.1, H*0.15, W*0.35);
+                nebula.addColorStop(0, 'rgba(80,30,60,0.04)');
+                nebula.addColorStop(0.5, 'rgba(60,20,80,0.025)');
+                nebula.addColorStop(1, 'rgba(0,0,0,0)');
+                ctx.fillStyle = nebula;
+                ctx.fillRect(0, 0, W, H);
 
-                    ctx.beginPath();
-                    ctx.arc(s.x, s.y, s.size * 5, 0, Math.PI * 2);
-                    ctx.fillStyle = gradient;
-                    ctx.fill();
+                // Meteors
+                spawnTimer++;
+                if (spawnTimer > 28 + Math.random() * 40 && meteors.length < 12) {
+                    meteors.push(createMeteor(false));
+                    spawnTimer = 0;
+                }
 
-                    // Core bright dot
-                    ctx.beginPath();
-                    ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
-                    ctx.fillStyle = `rgba(255,255,255,${alpha * 0.9})`;
-                    ctx.fill();
-
-                    // Move
-                    s.x += s.dirX * s.speed;
-                    s.y += s.dirY * s.speed;
-
-                    // Reset
-                    if (s.type === 'side') {
-                        if (s.y > canvas.height + 5) {
-                            s.y = -5;
-                            s.x = Math.random() < 0.5 ? Math.random() * canvas.width * 0.15 : canvas.width - Math.random() * canvas.width * 0.15;
-                        }
-                    } else {
-                        if (s.y > canvas.height + 5) { s.y = -5; s.x = Math.random() * canvas.width; }
-                        if (s.x < -5) s.x = canvas.width + 5;
-                        if (s.x > canvas.width + 5) s.x = -5;
+                for (let i = meteors.length - 1; i >= 0; i--) {
+                    drawMeteor(meteors[i]);
+                    if (!meteors[i].alive) {
+                        meteors.splice(i, 1);
                     }
-                });
-
-                // Shooting stars
-                shootingStars.forEach((ss, i) => {
-                    ss.progress += ss.speed;
-                    if (ss.progress >= 1) {
-                        shootingStars[i] = createShootingStar(canvas);
-                        return;
-                    }
-                    const cx = ss.x + ss.dx * ss.progress;
-                    const cy = ss.y + ss.dy * ss.progress;
-                    const tailLen = 60;
-                    const tx = cx - ss.dx * 0.15 * tailLen / Math.hypot(ss.dx, ss.dy);
-                    const ty = cy - ss.dy * 0.15 * tailLen / Math.hypot(ss.dx, ss.dy);
-
-                    const grad = ctx.createLinearGradient(tx, ty, cx, cy);
-                    grad.addColorStop(0, `rgba(${rgb[0]},${rgb[1]},${rgb[2]},0)`);
-                    grad.addColorStop(1, `rgba(255,255,255,0.85)`);
-
-                    ctx.beginPath();
-                    ctx.moveTo(tx, ty);
-                    ctx.lineTo(cx, cy);
-                    ctx.strokeStyle = grad;
-                    ctx.lineWidth = 1.5;
-                    ctx.stroke();
-
-                    // Head glow
-                    const hgrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 4);
-                    hgrad.addColorStop(0, `rgba(255,255,255,0.9)`);
-                    hgrad.addColorStop(1, `rgba(${rgb[0]},${rgb[1]},${rgb[2]},0)`);
-                    ctx.beginPath(); ctx.arc(cx, cy, 4, 0, Math.PI*2);
-                    ctx.fillStyle = hgrad; ctx.fill();
-                });
+                }
 
                 starAnimId = requestAnimationFrame(animate);
             }
-            animate();
-        }
 
-        function createShootingStar(canvas) {
-            const angle = Math.random() * Math.PI * 0.5 + Math.PI * 0.1;
-            const dist = Math.sqrt(canvas.width**2 + canvas.height**2);
-            return {
-                x: Math.random() * canvas.width * 0.7,
-                y: Math.random() * canvas.height * 0.5,
-                dx: Math.cos(angle) * dist * 0.4,
-                dy: Math.sin(angle) * dist * 0.4,
-                speed: Math.random() * 0.005 + 0.003,
-                progress: Math.random()
-            };
+            // First frame: fill background solid
+            ctx.fillStyle = '#050810';
+            ctx.fillRect(0, 0, W, H);
+
+            animate();
         }
 
         window.addEventListener('resize', initStars);
