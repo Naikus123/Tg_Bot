@@ -488,30 +488,33 @@
 
         /* ===== DRUM TIME PICKER ===== */
         .time-picker-wrap {
-            display: flex; align-items: center; justify-content: center; gap: 12px;
-            height: 240px; padding: 0 4px;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            height: 240px; padding: 0 2px;
         }
-        .drum-col { display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 1; height: 100%; }
-        .drum-label { font-size: 10px; letter-spacing: 2px; color: var(--hint); text-transform: uppercase; flex-shrink: 0; }
+        .drum-col { display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 1; height: 100%; min-width: 0; }
+        .drum-label { font-size: 9px; letter-spacing: 2px; color: var(--hint); text-transform: uppercase; flex-shrink: 0; }
         .drum-sep {
-            font-size: 30px; font-family: 'Orbitron', monospace;
-            color: var(--accent); padding-top: 28px; opacity: 0.8; flex-shrink: 0;
+            font-size: 24px; font-family: 'Orbitron', monospace;
+            color: var(--accent); padding-top: 24px; opacity: 0.8; flex-shrink: 0; width: 14px; text-align: center;
         }
         .drum-wrap {
-            flex: 1; width: 100%; position: relative; border-radius: 16px;
-            overflow: hidden; border: 1px solid var(--border);
+            flex: 1; width: 100%; position: relative; border-radius: 14px;
+            overflow: hidden; border: 1px solid var(--border); cursor: grab;
         }
+        .drum-wrap:active { cursor: grabbing; }
         .drum {
             width: 100%; height: 100%; overflow-y: scroll; scroll-snap-type: y mandatory;
             background: var(--surface2); scrollbar-width: none;
+            /* prevent native scroll interference on desktop */
+            overscroll-behavior: contain;
         }
         .drum::-webkit-scrollbar { display: none; }
         .drum-wrap::before, .drum-wrap::after {
-            content: ''; position: absolute; left: 0; right: 0; height: 80px;
+            content: ''; position: absolute; left: 0; right: 0; height: 72px;
             z-index: 2; pointer-events: none;
         }
-        .drum-wrap::before { top: 0; background: linear-gradient(to bottom, var(--surface2) 10%, transparent); }
-        .drum-wrap::after  { bottom: 0; background: linear-gradient(to top, var(--surface2) 10%, transparent); }
+        .drum-wrap::before { top: 0; background: linear-gradient(to bottom, var(--surface2) 15%, transparent); }
+        .drum-wrap::after  { bottom: 0; background: linear-gradient(to top, var(--surface2) 15%, transparent); }
         .drum-selector {
             position: absolute; top: 50%; left: 0; right: 0; height: 48px;
             transform: translateY(-50%);
@@ -520,8 +523,8 @@
         }
         .drum-item {
             height: 48px; display: flex; align-items: center; justify-content: center;
-            scroll-snap-align: center; font-size: 22px; font-family: 'Orbitron', monospace;
-            color: var(--hint); font-weight: 700; user-select: none;
+            scroll-snap-align: center; font-size: 20px; font-family: 'Orbitron', monospace;
+            color: var(--hint); font-weight: 700; user-select: none; pointer-events: none;
         }
     </style>
 </head>
@@ -666,15 +669,30 @@
             </div>
 
             <div class="btn-row">
-                <button class="btn btn-delete" id="btn-delete" onclick="deleteItem()" style="display:none;">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round">
-                        <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                <button class="btn btn-delete" id="btn-delete" onclick="deleteItem()" style="display:none;align-items:center;justify-content:center;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/>
                     </svg>
                 </button>
                 <button class="btn btn-cancel" onclick="closeEditor()">Отмена</button>
                 <button class="btn btn-save" onclick="saveItem()">Сохранить</button>
             </div>
         </div>
+    </div>
+
+    <!-- VIEW MODAL (fullscreen read) -->
+    <div id="view-modal" class="view-modal">
+        <div class="view-topbar">
+            <button class="view-back-btn" onclick="closeView()">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <div class="view-topbar-title" id="view-topbar-title">ПРОСМОТР</div>
+            <button class="view-edit-btn" onclick="editFromView()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                Изменить
+            </button>
+        </div>
+        <div class="view-body" id="view-body"></div>
     </div>
 
     <!-- CALENDAR OVERLAY -->
@@ -709,7 +727,7 @@
             <div class="time-picker-wrap">
                 <div class="drum-col">
                     <div class="drum-label">Часы</div>
-                    <div class="drum-wrap">
+                    <div class="drum-wrap" id="wrap-h">
                         <div class="drum-selector"></div>
                         <div class="drum" id="drum-h"></div>
                     </div>
@@ -717,9 +735,17 @@
                 <div class="drum-sep">:</div>
                 <div class="drum-col">
                     <div class="drum-label">Минуты</div>
-                    <div class="drum-wrap">
+                    <div class="drum-wrap" id="wrap-m">
                         <div class="drum-selector"></div>
                         <div class="drum" id="drum-m"></div>
+                    </div>
+                </div>
+                <div class="drum-sep">:</div>
+                <div class="drum-col">
+                    <div class="drum-label">Секунды</div>
+                    <div class="drum-wrap" id="wrap-s">
+                        <div class="drum-selector"></div>
+                        <div class="drum" id="drum-s"></div>
                     </div>
                 </div>
             </div>
@@ -857,17 +883,19 @@
         // ===== CUSTOM PICKER STATE =====
         let pickerDate = null;   // { year, month, day }
         let pickerTime = null;   // { h, m }
-        let pickerAttach = '';
+        let pickerAttach = [];   // array of attached titles
         let calViewYear, calViewMonth;
 
-        function getPickerDateTimeString() {
+                function getPickerDateTimeString() {
             if (!pickerDate || !pickerTime) return null;
-            const y = pickerDate.year;
+            const y  = pickerDate.year;
             const mo = String(pickerDate.month + 1).padStart(2,'0');
-            const d = String(pickerDate.day).padStart(2,'0');
-            const h = String(pickerTime.h).padStart(2,'0');
-            const m = String(pickerTime.m).padStart(2,'0');
-            return `${y}-${mo}-${d}T${h}:${m}`;
+            const d  = String(pickerDate.day).padStart(2,'0');
+            const h  = String(pickerTime.h).padStart(2,'0');
+            const m  = String(pickerTime.m).padStart(2,'0');
+            const s  = String(pickerTime.s || 0).padStart(2,'0');
+            return `${y}-${mo}-${d}T${h}:${m}:${s}`;
+        }-${mo}-${d}T${h}:${m}`;
         }
 
         function updateDateDisplay() {
@@ -890,7 +918,10 @@
             const el = document.getElementById('time-display');
             const txt = document.getElementById('time-display-text');
             if (pickerTime) {
-                txt.textContent = `${String(pickerTime.h).padStart(2,'0')}:${String(pickerTime.m).padStart(2,'0')}`;
+                const h = String(pickerTime.h).padStart(2,'0');
+                const m = String(pickerTime.m).padStart(2,'0');
+                const s = String(pickerTime.s || 0).padStart(2,'0');
+                txt.textContent = `${h}:${m}:${s}`;
                 el.classList.add('filled');
             } else {
                 txt.textContent = 'Выбрать время';
@@ -984,89 +1015,152 @@
 
         // ===== DRUM TIME PICKER =====
         const ITEM_H = 48;
-
-        const GHOST_ITEMS = 2; // items above/below to allow scrolling to 0 and max
+        const GHOST = 2;  // ghost rows top/bottom so 0 and max are centerable
+        const DRUMS = [
+            { id: 'drum-h', wrapId: 'wrap-h', count: 24 },
+            { id: 'drum-m', wrapId: 'wrap-m', count: 60 },
+            { id: 'drum-s', wrapId: 'wrap-s', count: 60 },
+        ];
 
         function buildDrum(id, count) {
             const drum = document.getElementById(id);
             drum.innerHTML = '';
-            // Ghost padding items at top
-            for (let p = 0; p < GHOST_ITEMS; p++) {
+            for (let p = 0; p < GHOST; p++) {
                 const g = document.createElement('div');
-                g.className = 'drum-item';
-                drum.appendChild(g);
+                g.className = 'drum-item'; drum.appendChild(g);
             }
-            // Real items
             for (let i = 0; i < count; i++) {
-                const item = document.createElement('div');
-                item.className = 'drum-item';
-                item.textContent = String(i).padStart(2, '0');
-                drum.appendChild(item);
+                const el = document.createElement('div');
+                el.className = 'drum-item';
+                el.textContent = String(i).padStart(2, '0');
+                drum.appendChild(el);
             }
-            // Ghost padding items at bottom
-            for (let p = 0; p < GHOST_ITEMS; p++) {
+            for (let p = 0; p < GHOST; p++) {
                 const g = document.createElement('div');
-                g.className = 'drum-item';
-                drum.appendChild(g);
+                g.className = 'drum-item'; drum.appendChild(g);
             }
         }
 
-        function scrollDrumTo(id, value, smooth) {
-            const drum = document.getElementById(id);
-            drum.scrollTo({ top: value * ITEM_H, behavior: smooth ? 'smooth' : 'instant' });
+        function snapDrum(drum, maxVal) {
+            // Snap to nearest item after wheel/drag
+            const raw = drum.scrollTop / ITEM_H;
+            const snapped = Math.max(0, Math.min(maxVal - 1, Math.round(raw)));
+            drum.scrollTo({ top: snapped * ITEM_H, behavior: 'smooth' });
         }
 
-        function getDrumValue(id, maxVal) {
-            const drum = document.getElementById(id);
+        function getDrumValue(drum, maxVal) {
             const val = Math.round(drum.scrollTop / ITEM_H);
             return Math.max(0, Math.min(maxVal - 1, val));
         }
 
-        function highlightDrums() {
-            const hVal = getDrumValue('drum-h', 24);
-            const mVal = getDrumValue('drum-m', 60);
-            highlightDrum('drum-h', hVal);
-            highlightDrum('drum-m', mVal);
+        function highlightDrum(drum, maxVal) {
+            const active = getDrumValue(drum, maxVal);
+            drum.querySelectorAll('.drum-item').forEach((el, idx) => {
+                const ri = idx - GHOST;
+                const dist = Math.abs(ri - active);
+                const isActive = ri === active;
+                el.style.color    = isActive ? 'var(--text)' : 'var(--hint)';
+                el.style.fontSize = isActive ? '24px' : dist === 1 ? '18px' : '15px';
+                el.style.opacity  = isActive ? '1'   : dist === 1 ? '0.55' : '0.25';
+            });
         }
 
-        function highlightDrum(id, activeVal) {
-            const drum = document.getElementById(id);
-            drum.querySelectorAll('.drum-item').forEach((el, idx) => {
-                const realIdx = idx - GHOST_ITEMS; // real value index
-                const isActive = realIdx === activeVal;
-                el.style.color = isActive ? 'var(--text)' : 'var(--hint)';
-                el.style.fontSize = isActive ? '26px' : '20px';
-                el.style.opacity = isActive ? '1' : (Math.abs(realIdx - activeVal) === 1 ? '0.6' : '0.3');
+        function attachDrumControls(drum, maxVal) {
+            // ── MOUSE WHEEL: step exactly one item per detent ──────────────
+            let wheelDebounce = null;
+            drum.addEventListener('wheel', e => {
+                e.preventDefault();
+                const dir = e.deltaY > 0 ? 1 : -1;
+                const cur = getDrumValue(drum, maxVal);
+                const next = Math.max(0, Math.min(maxVal - 1, cur + dir));
+                drum.scrollTo({ top: next * ITEM_H, behavior: 'smooth' });
+                highlightDrum(drum, maxVal);
+                clearTimeout(wheelDebounce);
+                wheelDebounce = setTimeout(() => highlightDrum(drum, maxVal), 120);
+            }, { passive: false });
+
+            // ── MOUSE DRAG ──────────────────────────────────────────────────
+            let dragStart = null;   // { y, scrollTop }
+            let dragging  = false;
+
+            drum.addEventListener('mousedown', e => {
+                e.preventDefault();
+                dragStart = { y: e.clientY, scrollTop: drum.scrollTop };
+                dragging  = true;
+                drum.style.cursor = 'grabbing';
             });
+
+            window.addEventListener('mousemove', e => {
+                if (!dragging || !dragStart) return;
+                const delta = dragStart.y - e.clientY;
+                drum.scrollTop = dragStart.scrollTop + delta;
+                highlightDrum(drum, maxVal);
+            });
+
+            window.addEventListener('mouseup', () => {
+                if (!dragging) return;
+                dragging = false;
+                drum.style.cursor = '';
+                snapDrum(drum, maxVal);
+                setTimeout(() => highlightDrum(drum, maxVal), 200);
+            });
+
+            // ── TOUCH: snap on end ──────────────────────────────────────────
+            drum.addEventListener('touchend', () => {
+                setTimeout(() => {
+                    snapDrum(drum, maxVal);
+                    setTimeout(() => highlightDrum(drum, maxVal), 200);
+                }, 50);
+            }, { passive: true });
+
+            // ── SCROLL (fallback highlight) ─────────────────────────────────
+            drum.addEventListener('scroll', () => highlightDrum(drum, maxVal), { passive: true });
         }
 
         function openTimePicker() {
-            buildDrum('drum-h', 24);
-            buildDrum('drum-m', 60);
-            const h = pickerTime ? pickerTime.h : new Date().getHours();
-            const m = pickerTime ? pickerTime.m : 0;
+            const now = new Date();
+            const initH = pickerTime ? pickerTime.h : now.getHours();
+            const initM = pickerTime ? pickerTime.m : now.getMinutes();
+            const initS = pickerTime ? (pickerTime.s || 0) : 0;
+
             document.getElementById('time-overlay').style.display = 'flex';
-            // Remove old listeners by cloning
-            ['drum-h','drum-m'].forEach(id => {
-                const old = document.getElementById(id);
-                const fresh = old.cloneNode(true);
-                old.parentNode.replaceChild(fresh, old);
+
+            DRUMS.forEach(({ id, count }) => buildDrum(id, count));
+
+            // Cloning resets all event listeners cleanly
+            DRUMS.forEach(({ id, wrapId }) => {
+                const oldDrum = document.getElementById(id);
+                const newDrum = oldDrum.cloneNode(true);
+                oldDrum.parentNode.replaceChild(newDrum, oldDrum);
             });
+
             setTimeout(() => {
-                scrollDrumTo('drum-h', h, false);
-                scrollDrumTo('drum-m', m, false);
-                highlightDrums();
-                document.getElementById('drum-h').addEventListener('scroll', highlightDrums, { passive: true });
-                document.getElementById('drum-m').addEventListener('scroll', highlightDrums, { passive: true });
-            }, 60);
+                const dH = document.getElementById('drum-h');
+                const dM = document.getElementById('drum-m');
+                const dS = document.getElementById('drum-s');
+                dH.scrollTop = initH * ITEM_H;
+                dM.scrollTop = initM * ITEM_H;
+                dS.scrollTop = initS * ITEM_H;
+                highlightDrum(dH, 24);
+                highlightDrum(dM, 60);
+                highlightDrum(dS, 60);
+                attachDrumControls(dH, 24);
+                attachDrumControls(dM, 60);
+                attachDrumControls(dS, 60);
+            }, 80);
         }
 
         function closeTimePicker() { document.getElementById('time-overlay').style.display = 'none'; }
 
         function confirmTime() {
-            const h = getDrumValue('drum-h', 24);
-            const m = getDrumValue('drum-m', 60);
-            pickerTime = { h, m };
+            const dH = document.getElementById('drum-h');
+            const dM = document.getElementById('drum-m');
+            const dS = document.getElementById('drum-s');
+            pickerTime = {
+                h: getDrumValue(dH, 24),
+                m: getDrumValue(dM, 60),
+                s: getDrumValue(dS, 60)
+            };
             updateTimeDisplay();
             closeTimePicker();
         }
@@ -1076,32 +1170,68 @@
 
         function buildAttachDropdown() {
             const dd = document.getElementById('attach-dropdown');
-            const items = [...appData.notes, ...appData.todos];
+            const items = [...(appData.notes||[]), ...(appData.todos||[])];
             dd.innerHTML = '';
 
-            const noneItem = document.createElement('div');
-            noneItem.className = 'dropdown-item' + (pickerAttach === '' ? ' selected' : '');
-            noneItem.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/></svg> — Без привязки —`;
-            noneItem.onclick = () => selectAttach('', '— Без привязки —');
-            dd.appendChild(noneItem);
+            if (items.length === 0) {
+                dd.innerHTML = '<div class="dropdown-item" style="opacity:0.5;cursor:default;">Нет заметок или задач</div>';
+                return;
+            }
+
+            // Header hint
+            const hint = document.createElement('div');
+            hint.style.cssText = 'padding:8px 16px 4px;font-size:10px;letter-spacing:1.5px;color:var(--hint);text-transform:uppercase;';
+            hint.textContent = 'Выберите один или несколько';
+            dd.appendChild(hint);
 
             items.forEach(item => {
                 const badge = item.type === 'note' ? 'Заметка' : 'Задача';
+                const isSelected = pickerAttach.includes(item.title);
                 const el = document.createElement('div');
-                el.className = 'dropdown-item' + (pickerAttach === item.title ? ' selected' : '');
-                el.innerHTML = `<span class="item-badge">${badge}</span> ${item.title}`;
-                el.onclick = () => selectAttach(item.title, `[${badge}] ${item.title}`);
+                el.className = 'dropdown-item' + (isSelected ? ' selected' : '');
+                el.innerHTML = `
+                    <div style="width:18px;height:18px;border-radius:5px;border:1px solid ${isSelected ? 'var(--accent)' : 'var(--border)'};background:${isSelected ? 'var(--accent)' : 'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:0.15s;">
+                        ${isSelected ? '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
+                    </div>
+                    <span class="item-badge">${badge}</span>
+                    <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${item.title}</span>
+                `;
+                el.onclick = () => toggleAttachItem(item.title);
                 dd.appendChild(el);
             });
+
+            // Clear all button
+            if (pickerAttach.length > 0) {
+                const clearBtn = document.createElement('div');
+                clearBtn.className = 'dropdown-item';
+                clearBtn.style.cssText = 'color:var(--danger);border-top:1px solid var(--border);margin-top:4px;';
+                clearBtn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Очистить всё`;
+                clearBtn.onclick = () => { pickerAttach = []; buildAttachDropdown(); updateAttachDisplay(); };
+                dd.appendChild(clearBtn);
+            }
         }
 
-        function selectAttach(value, label) {
-            pickerAttach = value;
+        function toggleAttachItem(title) {
+            const idx = pickerAttach.indexOf(title);
+            if (idx === -1) pickerAttach.push(title);
+            else pickerAttach.splice(idx, 1);
+            buildAttachDropdown();
+            updateAttachDisplay();
+        }
+
+        function updateAttachDisplay() {
             const txt = document.getElementById('attach-display-text');
-            const el = document.getElementById('attach-display');
-            txt.textContent = label;
-            el.classList.toggle('filled', value !== '');
-            toggleAttachDropdown();
+            const el  = document.getElementById('attach-display');
+            if (pickerAttach.length === 0) {
+                txt.textContent = '— Без привязки —';
+                el.classList.remove('filled');
+            } else if (pickerAttach.length === 1) {
+                txt.textContent = pickerAttach[0];
+                el.classList.add('filled');
+            } else {
+                txt.textContent = `${pickerAttach.length} прикреплено`;
+                el.classList.add('filled');
+            }
         }
 
         function toggleAttachDropdown() {
@@ -1127,7 +1257,7 @@
             const modalTitle = document.getElementById('modal-title');
 
             // Reset picker state
-            pickerDate = null; pickerTime = null; pickerAttach = '';
+            pickerDate = null; pickerTime = null; pickerAttach = [];
             attachDropdownOpen = false;
             document.getElementById('attach-dropdown').style.display = 'none';
 
@@ -1151,18 +1281,15 @@
                     if (item.time_str) {
                         const dt = new Date(item.time_str);
                         pickerDate = { year: dt.getFullYear(), month: dt.getMonth(), day: dt.getDate() };
-                        pickerTime = { h: dt.getHours(), m: dt.getMinutes() };
+                        pickerTime = { h: dt.getHours(), m: dt.getMinutes(), s: dt.getSeconds() };
                     }
-                    pickerAttach = item.attached || '';
-                    const attachLabel = pickerAttach
-                        ? (() => { const found = [...appData.notes,...appData.todos].find(x=>x.title===pickerAttach); return found ? `[${found.type==='note'?'Заметка':'Задача'}] ${found.title}` : pickerAttach; })()
-                        : '— Без привязки —';
-                    document.getElementById('attach-display-text').textContent = attachLabel;
-                    document.getElementById('attach-display').classList.toggle('filled', !!pickerAttach);
+                    const rawAttach = item.attached;
+                    pickerAttach = Array.isArray(rawAttach) ? rawAttach : (rawAttach && rawAttach !== '' ? [rawAttach] : []);
+                    updateAttachDisplay();
                 } else {
                     descEl.value = item.desc || '';
                 }
-                btnDel.style.display = 'flex';
+                btnDel.style.display = 'flex'; btnDel.style.alignItems = 'center'; btnDel.style.justifyContent = 'center';
             } else {
                 titleEl.value = ''; descEl.value = '';
                 btnDel.style.display = 'none';
@@ -1197,7 +1324,7 @@
                 const timeStr = getPickerDateTimeString();
                 newItem.time_str = timeStr;
                 newItem.timestamp = Math.floor(new Date(timeStr).getTime() / 1000);
-                newItem.attached = pickerAttach;
+                newItem.attached = pickerAttach.slice(); // store as array
             } else {
                 newItem.desc = document.getElementById('edit-desc').value.trim();
             }
@@ -1221,7 +1348,7 @@
                 desc: newItem.desc || "",
                 text: newItem.desc || "",
                 timestamp: newItem.timestamp || 0,
-                attached: newItem.attached || ""
+                attached: Array.isArray(newItem.attached) ? newItem.attached.join(', ') : (newItem.attached || "")
             };
 
             try {
@@ -1229,6 +1356,103 @@
                     tg.sendData(JSON.stringify(luaPayload));
                 }
             } catch(e) {}
+        }
+
+        // ===== VIEW (FULLSCREEN) =====
+        let viewingId = null;
+        let viewingTab = null;
+
+        function openView(id) {
+            viewingId = id;
+            viewingTab = currentTab;
+            const item = appData[currentTab].find(i => i.id === id);
+            if (!item) return;
+
+            const modal = document.getElementById('view-modal');
+            const body  = document.getElementById('view-body');
+            const topTitle = document.getElementById('view-topbar-title');
+
+            const typeLabels = { note: 'ЗАМЕТКА', todo: 'ЗАДАЧА', reminder: 'ТАЙМЕР' };
+            topTitle.textContent = typeLabels[item.type] || 'ПРОСМОТР';
+
+            let html = `<div class="view-title">${item.title}</div>`;
+
+            // meta badges
+            html += `<div class="view-meta-row">`;
+            html += `<span class="view-badge">${item.date || ''}</span>`;
+            if (item.type === 'note')     html += `<span class="view-badge accent">Заметка</span>`;
+            if (item.type === 'todo')     html += `<span class="view-badge accent">Задача</span>`;
+            if (item.type === 'reminder') html += `<span class="view-badge accent">Напоминание</span>`;
+            html += `</div>`;
+
+            if (item.type === 'reminder') {
+                // Timer block
+                const dtStr = item.time_str ? item.time_str.replace('T', ' ') : '—';
+                html += `
+                    <div class="view-timer-block">
+                        <div class="view-timer-label">Сработает</div>
+                        <div class="view-timer-time">${dtStr}</div>
+                        <div class="view-countdown-big" id="view-cd">Считаем...</div>
+                    </div>
+                `;
+
+                // Attached items
+                const attached = Array.isArray(item.attached) ? item.attached : (item.attached && item.attached !== '' ? [item.attached] : []);
+                if (attached.length > 0) {
+                    html += `<div class="view-section-label">Прикреплено (${attached.length})</div>`;
+                    html += `<div class="view-attach-list">`;
+                    attached.forEach(a => {
+                        const found = [...(appData.notes||[]), ...(appData.todos||[])].find(x => x.title === a);
+                        const badge = found ? (found.type === 'note' ? 'Заметка' : 'Задача') : '';
+                        html += `
+                            <div class="view-attach-item">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                                <span>${a}</span>
+                                ${badge ? `<span class="view-badge" style="margin-left:auto">${badge}</span>` : ''}
+                            </div>
+                        `;
+                    });
+                    html += `</div>`;
+                }
+            } else {
+                // Note / todo content
+                html += `<div class="view-divider"></div>`;
+                const text = item.desc || '';
+                html += `<div class="view-content${text ? '' : ' empty'}">${text || 'Нет описания'}</div>`;
+            }
+
+            body.innerHTML = html;
+            modal.classList.add('open');
+
+            // Live countdown for reminders
+            if (item.type === 'reminder' && item.timestamp) {
+                updateViewCountdown(item.timestamp);
+                window._viewCdInterval = setInterval(() => updateViewCountdown(item.timestamp), 1000);
+            }
+        }
+
+        function updateViewCountdown(ts) {
+            const el = document.getElementById('view-cd');
+            if (!el) { clearInterval(window._viewCdInterval); return; }
+            const diff = ts - Math.floor(Date.now()/1000);
+            if (diff <= 0) { el.textContent = '⚡ Время вышло!'; clearInterval(window._viewCdInterval); return; }
+            const d = Math.floor(diff/86400);
+            const h = Math.floor((diff%86400)/3600);
+            const m = Math.floor((diff%3600)/60);
+            const s = diff%60;
+            el.textContent = d > 0 ? `Осталось: ${d}д ${h}ч ${m}м ${s}с` : `Осталось: ${h}ч ${m}м ${s}с`;
+        }
+
+        function closeView() {
+            clearInterval(window._viewCdInterval);
+            document.getElementById('view-modal').classList.remove('open');
+            viewingId = null;
+        }
+
+        function editFromView() {
+            const id = viewingId;
+            closeView();
+            openEditor(id);
         }
 
         // ===== DELETE =====
@@ -1261,30 +1485,46 @@
                 return;
             }
 
+            const EDIT_ICON = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
+
             container.innerHTML = '';
             items.slice().reverse().forEach(item => {
-                let extra = '';
+                let preview = '';
                 if (currentTab === 'reminders') {
                     const dtStr = item.time_str ? item.time_str.replace('T', ' ').slice(0, 16) : '';
-                    const attachHtml = item.attached
-                        ? `<div class="attach-badge"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>${item.attached}</div>` : '';
-                    extra = `<div class="card-meta"><span>${dtStr}</span><span class="countdown" id="cd-${item.id}">...</span></div>${attachHtml}`;
+                    // Show attached count badge
+                    const attached = Array.isArray(item.attached) ? item.attached : (item.attached ? [item.attached] : []);
+                    const attachBadge = attached.length > 0
+                        ? `<span class="attach-badge"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>${attached.length} прикр.</span>` : '';
+                    preview = `<div class="card-meta"><span>${dtStr}</span><span class="countdown" id="cd-${item.id}">...</span></div>${attachBadge}`;
                 } else {
-                    extra = `
-                        <div class="card-text">${item.desc || ''}</div>
+                    const descPreview = (item.desc || '').slice(0, 120) + ((item.desc || '').length > 120 ? '…' : '');
+                    preview = `
+                        <div class="card-text">${descPreview}</div>
                         <div class="card-meta"><span>Изменено: ${item.date}</span></div>
                     `;
                 }
 
                 container.innerHTML += `
-                    <div class="card" onclick="openEditor(${item.id})">
+                    <div class="card" style="cursor:default;">
                         <div class="card-accent-line"></div>
-                        <div class="card-inner">
-                            <div class="card-title">${item.title}</div>
-                            ${extra}
+                        <div class="card-inner" style="display:flex;flex-direction:column;flex:1;">
+                            <div style="display:flex;align-items:flex-start;gap:8px;">
+                                <div style="flex:1;min-width:0;" onclick="openView(${item.id})" style="cursor:pointer;">
+                                    <div class="card-title">${item.title}</div>
+                                    ${preview}
+                                </div>
+                                <button onclick="event.stopPropagation();openEditor(${item.id})" style="background:var(--surface2);border:1px solid var(--border);color:var(--hint);border-radius:10px;padding:7px 9px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;margin-top:2px;transition:0.15s;" onmouseenter="this.style.color='var(--accent)';this.style.borderColor='var(--accent)'" onmouseleave="this.style.color='var(--hint)';this.style.borderColor='var(--border)'">${EDIT_ICON}</button>
+                            </div>
                         </div>
                     </div>
                 `;
+            });
+
+            // Make card body clickable for view
+            container.querySelectorAll('.card').forEach(card => {
+                const inner = card.querySelector('.card-inner > div > div:first-child');
+                if (inner) inner.style.cursor = 'pointer';
             });
         }
 
@@ -1327,7 +1567,7 @@
             canvas.height = window.innerHeight;
             const W = canvas.width, H = canvas.height;
 
-            // --- Static background stars ---
+            // --- Static background stars with random twinkling ---
             const bgStars = [];
             for (let i = 0; i < 220; i++) {
                 bgStars.push({
@@ -1337,8 +1577,14 @@
                     alpha: Math.random() * 0.6 + 0.15,
                     pulse: Math.random() * Math.PI * 2,
                     pulseSpeed: Math.random() * 0.02 + 0.005,
-                    // Some are blue-white, some warm
-                    hue: Math.random() < 0.3 ? [180,220,255] : [255,255,255]
+                    hue: Math.random() < 0.3 ? [180,220,255] : [255,255,255],
+                    // Twinkling: each star has a random chance to flash brightly
+                    twinklePhase: Math.random() * Math.PI * 2,
+                    twinkleSpeed: Math.random() * 0.008 + 0.001,  // very slow base
+                    twinkleChance: Math.random(), // 0..1, only ~20% stars twinkle fast
+                    flashTimer: Math.random() * 600,  // frame countdown to next flash
+                    flashing: false,
+                    flashBrightness: 0
                 });
             }
 
@@ -1404,21 +1650,72 @@
 
             function drawBgStar(s) {
                 s.pulse += s.pulseSpeed;
-                const a = s.alpha * (0.7 + 0.3 * Math.sin(s.pulse));
+                let a = s.alpha * (0.7 + 0.3 * Math.sin(s.pulse));
+
+                // Random flash twinkle
+                s.flashTimer--;
+                if (s.flashTimer <= 0 && !s.flashing) {
+                    // Only 25% of stars ever flash
+                    if (s.twinkleChance < 0.25) {
+                        s.flashing = true;
+                        s.flashBrightness = 0;
+                    }
+                    // Reset timer: random 3-15 seconds (at ~60fps)
+                    s.flashTimer = 180 + Math.random() * 720;
+                }
+                if (s.flashing) {
+                    s.flashBrightness += 0.08;
+                    if (s.flashBrightness >= Math.PI) {
+                        s.flashing = false;
+                        s.flashBrightness = 0;
+                    } else {
+                        // Flash arc: sin curve 0→1→0
+                        const boost = Math.sin(s.flashBrightness);
+                        a = Math.min(1, a + boost * 0.85);
+                    }
+                }
+
                 const [r,g,b] = s.hue;
-                // Subtle cross/sparkle for bright ones
-                if (s.r > 0.9) {
+
+                // Sparkle cross for bright or flashing stars
+                const isBright = s.r > 0.9 || (s.flashing && s.flashBrightness > 0.3);
+                if (isBright) {
+                    const boost = s.flashing ? Math.sin(s.flashBrightness) : 0;
+                    const arm = s.r * (3 + boost * 6);
                     ctx.save();
-                    ctx.globalAlpha = a * 0.4;
-                    ctx.strokeStyle = `rgb(${r},${g},${b})`;
-                    ctx.lineWidth = 0.5;
-                    const arm = s.r * 3;
-                    ctx.beginPath(); ctx.moveTo(s.x - arm, s.y); ctx.lineTo(s.x + arm, s.y); ctx.stroke();
-                    ctx.beginPath(); ctx.moveTo(s.x, s.y - arm); ctx.lineTo(s.x, s.y + arm); ctx.stroke();
+                    ctx.globalAlpha = a * (0.3 + boost * 0.5);
+                    // Accent-colored glow on flash
+                    const flashRgb = hexToRgb(getAccentColor());
+                    const cr = s.flashing ? flashRgb[0] : r;
+                    const cg = s.flashing ? flashRgb[1] : g;
+                    const cb = s.flashing ? flashRgb[2] : b;
+                    ctx.strokeStyle = `rgb(${cr},${cg},${cb})`;
+                    ctx.lineWidth = 0.5 + boost;
+                    ctx.beginPath(); ctx.moveTo(s.x-arm,s.y); ctx.lineTo(s.x+arm,s.y); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(s.x,s.y-arm); ctx.lineTo(s.x,s.y+arm); ctx.stroke();
+                    // Diagonal arms on strong flash
+                    if (boost > 0.5) {
+                        const d = arm * 0.6;
+                        ctx.globalAlpha *= 0.5;
+                        ctx.beginPath(); ctx.moveTo(s.x-d,s.y-d); ctx.lineTo(s.x+d,s.y+d); ctx.stroke();
+                        ctx.beginPath(); ctx.moveTo(s.x+d,s.y-d); ctx.lineTo(s.x-d,s.y+d); ctx.stroke();
+                    }
                     ctx.restore();
                 }
+
+                // Glow halo on flash
+                if (s.flashing && s.flashBrightness > 0.2) {
+                    const boost = Math.sin(s.flashBrightness);
+                    const flashRgb = hexToRgb(getAccentColor());
+                    const haloGrad = ctx.createRadialGradient(s.x,s.y,0,s.x,s.y,s.r*10*boost);
+                    haloGrad.addColorStop(0, `rgba(${flashRgb[0]},${flashRgb[1]},${flashRgb[2]},${boost*0.4})`);
+                    haloGrad.addColorStop(1, `rgba(${flashRgb[0]},${flashRgb[1]},${flashRgb[2]},0)`);
+                    ctx.beginPath(); ctx.arc(s.x,s.y,s.r*10*boost,0,Math.PI*2);
+                    ctx.fillStyle = haloGrad; ctx.fill();
+                }
+
                 ctx.beginPath();
-                ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+                ctx.arc(s.x, s.y, s.r * (1 + (s.flashing ? Math.sin(s.flashBrightness)*0.8 : 0)), 0, Math.PI*2);
                 ctx.fillStyle = `rgba(${r},${g},${b},${a})`;
                 ctx.fill();
             }
