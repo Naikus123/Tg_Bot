@@ -526,6 +526,65 @@
             scroll-snap-align: center; font-size: 20px; font-family: 'Orbitron', monospace;
             color: var(--hint); font-weight: 700; user-select: none; pointer-events: none;
         }
+
+        /* ===== VIEW MODAL (fullscreen read) ===== */
+        .view-modal {
+            display: none; position: fixed; inset: 0;
+            background: var(--bg);
+            z-index: 300; flex-direction: column;
+            animation: slideIn 0.3s ease;
+        }
+        .view-modal.open { display: flex; }
+        @keyframes slideIn {
+            from { transform: translateX(100%); }
+            to   { transform: translateX(0); }
+        }
+        .view-topbar {
+            display: flex; align-items: center; padding: 16px;
+            border-bottom: 1px solid var(--border);
+            background: linear-gradient(to bottom, var(--surface), transparent);
+        }
+        .view-back-btn {
+            background: none; border: none; color: var(--accent);
+            display: flex; align-items: center; cursor: pointer; padding: 8px;
+        }
+        .view-topbar-title {
+            flex: 1; text-align: center; font-family: 'Orbitron', monospace;
+            font-size: 14px; font-weight: 700; letter-spacing: 2px;
+            color: var(--hint);
+        }
+        .view-edit-btn {
+            background: var(--surface2); border: 1px solid var(--border);
+            color: var(--text); border-radius: 8px; padding: 6px 12px;
+            font-size: 12px; font-weight: 600; cursor: pointer;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .view-body { padding: 24px; overflow-y: auto; flex: 1; }
+        .view-title { font-size: 24px; font-weight: 700; margin-bottom: 12px; line-height: 1.3; }
+        .view-meta-row { display: flex; gap: 8px; margin-bottom: 24px; }
+        .view-badge {
+            font-size: 11px; color: var(--hint); background: var(--surface2);
+            border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px;
+        }
+        .view-badge.accent { color: var(--accent); border-color: var(--accent); box-shadow: 0 0 10px var(--glow); }
+        .view-divider { height: 1px; background: var(--border); margin: 20px 0; }
+        .view-content { font-size: 15px; line-height: 1.6; color: var(--text); white-space: pre-wrap; }
+        .view-content.empty { color: var(--hint); font-style: italic; }
+        
+        .view-timer-block {
+            background: var(--surface2); border: 1px solid var(--border); border-radius: 16px;
+            padding: 20px; text-align: center; margin-bottom: 24px;
+            box-shadow: 0 0 20px var(--glow) inset;
+        }
+        .view-timer-label { font-size: 12px; color: var(--hint); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px; }
+        .view-timer-time { font-family: 'Orbitron', monospace; font-size: 18px; color: var(--text); margin-bottom: 16px; }
+        .view-countdown-big { font-family: 'Orbitron', monospace; font-size: 28px; font-weight: 700; color: var(--accent); text-shadow: 0 0 15px var(--glow); animation: pulse 1s infinite; }
+        .view-section-label { font-size: 12px; color: var(--hint); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 12px; }
+        .view-attach-list { display: flex; flex-direction: column; gap: 8px; }
+        .view-attach-item {
+            display: flex; align-items: center; gap: 12px; background: var(--surface);
+            border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; font-size: 14px;
+        }
     </style>
 </head>
 <body>
@@ -803,34 +862,68 @@
         let editingId = null;
         let appData = { notes: [], todos: [], reminders: [] };
 
-        // ===== CLOUD STORAGE =====
-        function loadData() {
+        // ===== CLOUD STORAGE & LOCAL BACKUP =====
+        function isCloudSupported() {
+            return tg.isVersionAtLeast && tg.isVersionAtLeast('6.9');
+        }
+
+        function loadDataFallback() {
+            try { const val = localStorage.getItem('an1mk0_data'); if (val) appData = JSON.parse(val); } catch(e) {}
             try {
-                tg.CloudStorage.getItem('an1mk0_data', (err, val) => {
-                    if (!err && val) {
-                        try { appData = JSON.parse(val); } catch(e) {}
-                    }
-                    renderList();
-                });
-                tg.CloudStorage.getItem('an1mk0_theme', (err, val) => {
-                    if (!err && val) {
-                        currentTheme = val;
-                        applyTheme(val);
-                        const btn = document.getElementById('theme-btn-' + val);
-                        if (btn) btn.classList.add('active-theme');
-                    }
-                });
-                tg.CloudStorage.getItem('an1mk0_bg', (err, val) => {
-                    if (!err && val) setBgMode(val);
-                    else setBgMode('meteor');
-                });
-            } catch(e) {
-                renderList();
+                const theme = localStorage.getItem('an1mk0_theme');
+                if (theme) {
+                    currentTheme = theme; applyTheme(theme);
+                    const btn = document.getElementById('theme-btn-' + theme);
+                    if (btn) btn.classList.add('active-theme');
+                }
+            } catch(e) {}
+            try {
+                const bg = localStorage.getItem('an1mk0_bg');
+                if (bg) setBgMode(bg); else setBgMode('meteor');
+            } catch(e) {}
+            renderList();
+        }
+
+        function loadData() {
+            if (isCloudSupported()) {
+                try {
+                    tg.CloudStorage.getItem('an1mk0_data', (err, val) => {
+                        if (!err && val) {
+                            try { appData = JSON.parse(val); } catch(e) {}
+                        } else {
+                            try { const loc = localStorage.getItem('an1mk0_data'); if(loc) appData = JSON.parse(loc); } catch(e){}
+                        }
+                        renderList();
+                    });
+                    tg.CloudStorage.getItem('an1mk0_theme', (err, val) => {
+                        let t = val;
+                        if (err || !val) { try { t = localStorage.getItem('an1mk0_theme'); } catch(e){} }
+                        if (t) {
+                            currentTheme = t;
+                            applyTheme(t);
+                            const btn = document.getElementById('theme-btn-' + t);
+                            if (btn) btn.classList.add('active-theme');
+                        }
+                    });
+                    tg.CloudStorage.getItem('an1mk0_bg', (err, val) => {
+                        let b = val;
+                        if (err || !val) { try { b = localStorage.getItem('an1mk0_bg'); } catch(e){} }
+                        if (b) setBgMode(b);
+                        else setBgMode('meteor');
+                    });
+                } catch(e) {
+                    loadDataFallback();
+                }
+            } else {
+                loadDataFallback();
             }
         }
 
         function saveDataToCloud() {
-            try { tg.CloudStorage.setItem('an1mk0_data', JSON.stringify(appData)); } catch(e) {}
+            try { localStorage.setItem('an1mk0_data', JSON.stringify(appData)); } catch(e) {}
+            if (isCloudSupported()) {
+                try { tg.CloudStorage.setItem('an1mk0_data', JSON.stringify(appData)); } catch(e) {}
+            }
         }
 
         let currentBgMode = 'meteor'; // 'meteor' | 'neonfield'
@@ -839,7 +932,10 @@
         function setTheme(name) {
             currentTheme = name;
             applyTheme(name);
-            try { tg.CloudStorage.setItem('an1mk0_theme', name); } catch(e) {}
+            try { localStorage.setItem('an1mk0_theme', name); } catch(e) {}
+            if (isCloudSupported()) {
+                try { tg.CloudStorage.setItem('an1mk0_theme', name); } catch(e) {}
+            }
             // Update active button
             document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active-theme'));
             const btn = document.getElementById('theme-btn-' + name);
@@ -857,7 +953,10 @@
             document.querySelectorAll('.bg-toggle-btn').forEach(b => b.classList.remove('active'));
             const btn = document.getElementById('bg-btn-' + mode);
             if (btn) btn.classList.add('active');
-            try { tg.CloudStorage.setItem('an1mk0_bg', mode); } catch(e) {}
+            try { localStorage.setItem('an1mk0_bg', mode); } catch(e) {}
+            if (isCloudSupported()) {
+                try { tg.CloudStorage.setItem('an1mk0_bg', mode); } catch(e) {}
+            }
             initBackground();
         }
 
@@ -886,7 +985,7 @@
         let pickerAttach = [];   // array of attached titles
         let calViewYear, calViewMonth;
 
-                function getPickerDateTimeString() {
+        function getPickerDateTimeString() {
             if (!pickerDate || !pickerTime) return null;
             const y  = pickerDate.year;
             const mo = String(pickerDate.month + 1).padStart(2,'0');
@@ -895,7 +994,6 @@
             const m  = String(pickerTime.m).padStart(2,'0');
             const s  = String(pickerTime.s || 0).padStart(2,'0');
             return `${y}-${mo}-${d}T${h}:${m}:${s}`;
-        }-${mo}-${d}T${h}:${m}`;
         }
 
         function updateDateDisplay() {
@@ -1042,7 +1140,6 @@
         }
 
         function snapDrum(drum, maxVal) {
-            // Snap to nearest item after wheel/drag
             const raw = drum.scrollTop / ITEM_H;
             const snapped = Math.max(0, Math.min(maxVal - 1, Math.round(raw)));
             drum.scrollTo({ top: snapped * ITEM_H, behavior: 'smooth' });
@@ -1066,7 +1163,6 @@
         }
 
         function attachDrumControls(drum, maxVal) {
-            // ── MOUSE WHEEL: step exactly one item per detent ──────────────
             let wheelDebounce = null;
             drum.addEventListener('wheel', e => {
                 e.preventDefault();
@@ -1079,8 +1175,7 @@
                 wheelDebounce = setTimeout(() => highlightDrum(drum, maxVal), 120);
             }, { passive: false });
 
-            // ── MOUSE DRAG ──────────────────────────────────────────────────
-            let dragStart = null;   // { y, scrollTop }
+            let dragStart = null;   
             let dragging  = false;
 
             drum.addEventListener('mousedown', e => {
@@ -1105,7 +1200,6 @@
                 setTimeout(() => highlightDrum(drum, maxVal), 200);
             });
 
-            // ── TOUCH: snap on end ──────────────────────────────────────────
             drum.addEventListener('touchend', () => {
                 setTimeout(() => {
                     snapDrum(drum, maxVal);
@@ -1113,7 +1207,6 @@
                 }, 50);
             }, { passive: true });
 
-            // ── SCROLL (fallback highlight) ─────────────────────────────────
             drum.addEventListener('scroll', () => highlightDrum(drum, maxVal), { passive: true });
         }
 
@@ -1127,8 +1220,7 @@
 
             DRUMS.forEach(({ id, count }) => buildDrum(id, count));
 
-            // Cloning resets all event listeners cleanly
-            DRUMS.forEach(({ id, wrapId }) => {
+            DRUMS.forEach(({ id }) => {
                 const oldDrum = document.getElementById(id);
                 const newDrum = oldDrum.cloneNode(true);
                 oldDrum.parentNode.replaceChild(newDrum, oldDrum);
@@ -1178,7 +1270,6 @@
                 return;
             }
 
-            // Header hint
             const hint = document.createElement('div');
             hint.style.cssText = 'padding:8px 16px 4px;font-size:10px;letter-spacing:1.5px;color:var(--hint);text-transform:uppercase;';
             hint.textContent = 'Выберите один или несколько';
@@ -1200,7 +1291,6 @@
                 dd.appendChild(el);
             });
 
-            // Clear all button
             if (pickerAttach.length > 0) {
                 const clearBtn = document.createElement('div');
                 clearBtn.className = 'dropdown-item';
@@ -1256,7 +1346,6 @@
             const btnDel = document.getElementById('btn-delete');
             const modalTitle = document.getElementById('modal-title');
 
-            // Reset picker state
             pickerDate = null; pickerTime = null; pickerAttach = [];
             attachDropdownOpen = false;
             document.getElementById('attach-dropdown').style.display = 'none';
@@ -1311,8 +1400,11 @@
             const title = document.getElementById('edit-title').value.trim();
             if (!title) { tg.showAlert("Введите название!"); return; }
 
+            const isEdit = editingId !== null;
+            let oldTitle = "";
+
             const newItem = {
-                id: editingId !== null ? editingId : Date.now(),
+                id: isEdit ? editingId : Date.now(),
                 type: currentTab === 'todos' ? 'todo' : currentTab === 'reminders' ? 'reminder' : 'note',
                 title: title,
                 date: new Date().toLocaleDateString('ru-RU')
@@ -1329,9 +1421,12 @@
                 newItem.desc = document.getElementById('edit-desc').value.trim();
             }
 
-            if (editingId !== null) {
+            if (isEdit) {
                 const idx = appData[currentTab].findIndex(i => i.id === editingId);
-                if (idx !== -1) appData[currentTab][idx] = newItem;
+                if (idx !== -1) {
+                    oldTitle = appData[currentTab][idx].title;
+                    appData[currentTab][idx] = newItem;
+                }
             } else {
                 appData[currentTab].push(newItem);
             }
@@ -1340,9 +1435,9 @@
             closeEditor();
             renderList();
 
-            // Send to Lua bot
             const luaPayload = {
-                action: 'save_' + newItem.type,
+                action: isEdit ? 'edit_' + newItem.type : 'save_' + newItem.type,
+                old_title: oldTitle,
                 title: newItem.title,
                 name: newItem.title,
                 desc: newItem.desc || "",
@@ -1377,7 +1472,6 @@
 
             let html = `<div class="view-title">${item.title}</div>`;
 
-            // meta badges
             html += `<div class="view-meta-row">`;
             html += `<span class="view-badge">${item.date || ''}</span>`;
             if (item.type === 'note')     html += `<span class="view-badge accent">Заметка</span>`;
@@ -1386,7 +1480,6 @@
             html += `</div>`;
 
             if (item.type === 'reminder') {
-                // Timer block
                 const dtStr = item.time_str ? item.time_str.replace('T', ' ') : '—';
                 html += `
                     <div class="view-timer-block">
@@ -1396,7 +1489,6 @@
                     </div>
                 `;
 
-                // Attached items
                 const attached = Array.isArray(item.attached) ? item.attached : (item.attached && item.attached !== '' ? [item.attached] : []);
                 if (attached.length > 0) {
                     html += `<div class="view-section-label">Прикреплено (${attached.length})</div>`;
@@ -1415,7 +1507,6 @@
                     html += `</div>`;
                 }
             } else {
-                // Note / todo content
                 html += `<div class="view-divider"></div>`;
                 const text = item.desc || '';
                 html += `<div class="view-content${text ? '' : ' empty'}">${text || 'Нет описания'}</div>`;
@@ -1424,7 +1515,6 @@
             body.innerHTML = html;
             modal.classList.add('open');
 
-            // Live countdown for reminders
             if (item.type === 'reminder' && item.timestamp) {
                 updateViewCountdown(item.timestamp);
                 window._viewCdInterval = setInterval(() => updateViewCountdown(item.timestamp), 1000);
@@ -1459,10 +1549,19 @@
         function deleteItem() {
             tg.showConfirm("Удалить запись?", (confirmed) => {
                 if (confirmed) {
+                    const item = appData[currentTab].find(i => i.id === editingId);
                     appData[currentTab] = appData[currentTab].filter(i => i.id !== editingId);
                     saveDataToCloud();
                     closeEditor();
                     renderList();
+                    
+                    if (item) {
+                        try {
+                            if (tg.initDataUnsafe && Object.keys(tg.initDataUnsafe).length > 0) {
+                                tg.sendData(JSON.stringify({ action: 'delete_item', type: item.type, title: item.title }));
+                            }
+                        } catch(e) {}
+                    }
                 }
             });
         }
@@ -1492,7 +1591,6 @@
                 let preview = '';
                 if (currentTab === 'reminders') {
                     const dtStr = item.time_str ? item.time_str.replace('T', ' ').slice(0, 16) : '';
-                    // Show attached count badge
                     const attached = Array.isArray(item.attached) ? item.attached : (item.attached ? [item.attached] : []);
                     const attachBadge = attached.length > 0
                         ? `<span class="attach-badge"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>${attached.length} прикр.</span>` : '';
@@ -1521,14 +1619,12 @@
                 `;
             });
 
-            // Make card body clickable for view
             container.querySelectorAll('.card').forEach(card => {
                 const inner = card.querySelector('.card-inner > div > div:first-child');
                 if (inner) inner.style.cursor = 'pointer';
             });
         }
 
-        // ===== COUNTDOWN TIMERS =====
         setInterval(() => {
             if (currentTab !== 'reminders') return;
             const now = Math.floor(Date.now() / 1000);
@@ -1537,15 +1633,13 @@
                 if (!el) return;
                 const diff = (item.timestamp || 0) - now;
                 if (diff <= 0) { el.innerText = '⚡ Время!'; return; }
-                const d = Math.floor(diff / 86400);
-                const h = Math.floor((diff % 86400) / 3600);
-                const m = Math.floor((diff % 3600) / 60);
-                const s = diff % 60;
+                const d = Math.floor(diff / 86400); const h = Math.floor((diff % 86400) / 3600);
+                const m = Math.floor((diff % 3600) / 60); const s = diff % 60;
                 el.innerText = d > 0 ? `${d}д ${h}ч ${m}м` : `${h}ч ${m}м ${s}с`;
             });
         }, 1000);
 
-        // ===== STARFIELD — REALISTIC METEOR SHOWER =====
+        // ===== BACKGROUNDS =====
         let starAnimId;
 
         function getAccentColor() {
@@ -1567,376 +1661,167 @@
             canvas.height = window.innerHeight;
             const W = canvas.width, H = canvas.height;
 
-            // --- Static background stars with random twinkling ---
             const bgStars = [];
             for (let i = 0; i < 220; i++) {
                 bgStars.push({
-                    x: Math.random() * W,
-                    y: Math.random() * H,
-                    r: Math.random() * 1.2 + 0.2,
-                    alpha: Math.random() * 0.6 + 0.15,
-                    pulse: Math.random() * Math.PI * 2,
-                    pulseSpeed: Math.random() * 0.02 + 0.005,
-                    hue: Math.random() < 0.3 ? [180,220,255] : [255,255,255],
-                    // Twinkling: each star has a random chance to flash brightly
-                    twinklePhase: Math.random() * Math.PI * 2,
-                    twinkleSpeed: Math.random() * 0.008 + 0.001,  // very slow base
-                    twinkleChance: Math.random(), // 0..1, only ~20% stars twinkle fast
-                    flashTimer: Math.random() * 600,  // frame countdown to next flash
-                    flashing: false,
-                    flashBrightness: 0
+                    x: Math.random() * W, y: Math.random() * H, r: Math.random() * 1.2 + 0.2,
+                    alpha: Math.random() * 0.6 + 0.15, pulse: Math.random() * Math.PI * 2,
+                    pulseSpeed: Math.random() * 0.02 + 0.005, hue: Math.random() < 0.3 ? [180,220,255] : [255,255,255],
+                    twinklePhase: Math.random() * Math.PI * 2, twinkleSpeed: Math.random() * 0.008 + 0.001,
+                    twinkleChance: Math.random(), flashTimer: Math.random() * 600, flashing: false, flashBrightness: 0
                 });
             }
 
-            // --- Radiant point (top-left area, like in photo) ---
-            const radiantX = W * 0.15;
-            const radiantY = H * 0.10;
+            const radiantX = W * 0.15, radiantY = H * 0.10;
 
-            // --- Meteors ---
-            // All meteors diverge FROM the radiant point outward (parallel-ish, like Leonids)
             function createMeteor(immediate = false) {
-                // Spread angle: mostly going down-right, some variation
-                const baseAngle = Math.PI * 0.30; // ~54° from horizontal
+                const baseAngle = Math.PI * 0.30;
                 const spread = (Math.random() - 0.5) * 0.22;
                 const angle = baseAngle + spread;
-
-                // Travel distance across screen
                 const dist = (Math.random() * 0.5 + 0.6) * Math.sqrt(W*W + H*H);
-
-                // Start near radiant with offset so they look parallel
                 const offset = (Math.random() - 0.5) * W * 1.2;
-                const perpX = Math.cos(angle + Math.PI/2);
-                const perpY = Math.sin(angle + Math.PI/2);
-
-                const sx = radiantX + perpX * offset;
-                const sy = radiantY + perpY * offset;
-                const ex = sx + Math.cos(angle) * dist;
-                const ey = sy + Math.sin(angle) * dist;
-
-                const speed = Math.random() * 2.5 + 1.8; // px per frame
-                const length = Math.random() * 180 + 80; // tail length px
-                const width = Math.random() * 1.2 + 0.5;
-                const brightness = Math.random() * 0.5 + 0.5;
-
-                // Green-yellow core like real meteors, with accent tint
-                const useGreen = Math.random() < 0.6;
+                const perpX = Math.cos(angle + Math.PI/2), perpY = Math.sin(angle + Math.PI/2);
+                const sx = radiantX + perpX * offset, sy = radiantY + perpY * offset;
 
                 return {
-                    sx, sy, ex, ey,
-                    angle,
-                    dx: Math.cos(angle),
-                    dy: Math.sin(angle),
-                    // current head position
-                    hx: sx, hy: sy,
-                    speed,
-                    length,
-                    width,
-                    brightness,
-                    useGreen,
-                    // total travel
-                    totalDist: dist,
-                    traveled: immediate ? Math.random() * dist : 0,
-                    // fade in/out
-                    alive: true
+                    sx, sy, ex: sx + Math.cos(angle) * dist, ey: sy + Math.sin(angle) * dist,
+                    angle, dx: Math.cos(angle), dy: Math.sin(angle),
+                    hx: sx, hy: sy, speed: Math.random() * 2.5 + 1.8,
+                    length: Math.random() * 180 + 80, width: Math.random() * 1.2 + 0.5,
+                    brightness: Math.random() * 0.5 + 0.5, useGreen: Math.random() < 0.6,
+                    totalDist: dist, traveled: immediate ? Math.random() * dist : 0, alive: true
                 };
             }
 
             const meteors = [];
-            // Start with some already mid-flight
             for (let i = 0; i < 7; i++) meteors.push(createMeteor(true));
-
-            // Spawn new ones over time
             let spawnTimer = 0;
 
             function drawBgStar(s) {
                 s.pulse += s.pulseSpeed;
                 let a = s.alpha * (0.7 + 0.3 * Math.sin(s.pulse));
-
-                // Random flash twinkle
                 s.flashTimer--;
                 if (s.flashTimer <= 0 && !s.flashing) {
-                    // Only 25% of stars ever flash
-                    if (s.twinkleChance < 0.25) {
-                        s.flashing = true;
-                        s.flashBrightness = 0;
-                    }
-                    // Reset timer: random 3-15 seconds (at ~60fps)
+                    if (s.twinkleChance < 0.25) { s.flashing = true; s.flashBrightness = 0; }
                     s.flashTimer = 180 + Math.random() * 720;
                 }
                 if (s.flashing) {
                     s.flashBrightness += 0.08;
-                    if (s.flashBrightness >= Math.PI) {
-                        s.flashing = false;
-                        s.flashBrightness = 0;
-                    } else {
-                        // Flash arc: sin curve 0→1→0
-                        const boost = Math.sin(s.flashBrightness);
-                        a = Math.min(1, a + boost * 0.85);
-                    }
+                    if (s.flashBrightness >= Math.PI) { s.flashing = false; s.flashBrightness = 0; } 
+                    else { a = Math.min(1, a + Math.sin(s.flashBrightness) * 0.85); }
                 }
-
                 const [r,g,b] = s.hue;
-
-                // Sparkle cross for bright or flashing stars
                 const isBright = s.r > 0.9 || (s.flashing && s.flashBrightness > 0.3);
                 if (isBright) {
                     const boost = s.flashing ? Math.sin(s.flashBrightness) : 0;
                     const arm = s.r * (3 + boost * 6);
                     ctx.save();
                     ctx.globalAlpha = a * (0.3 + boost * 0.5);
-                    // Accent-colored glow on flash
                     const flashRgb = hexToRgb(getAccentColor());
-                    const cr = s.flashing ? flashRgb[0] : r;
-                    const cg = s.flashing ? flashRgb[1] : g;
-                    const cb = s.flashing ? flashRgb[2] : b;
-                    ctx.strokeStyle = `rgb(${cr},${cg},${cb})`;
+                    ctx.strokeStyle = `rgb(${s.flashing ? flashRgb[0] : r},${s.flashing ? flashRgb[1] : g},${s.flashing ? flashRgb[2] : b})`;
                     ctx.lineWidth = 0.5 + boost;
                     ctx.beginPath(); ctx.moveTo(s.x-arm,s.y); ctx.lineTo(s.x+arm,s.y); ctx.stroke();
                     ctx.beginPath(); ctx.moveTo(s.x,s.y-arm); ctx.lineTo(s.x,s.y+arm); ctx.stroke();
-                    // Diagonal arms on strong flash
-                    if (boost > 0.5) {
-                        const d = arm * 0.6;
-                        ctx.globalAlpha *= 0.5;
-                        ctx.beginPath(); ctx.moveTo(s.x-d,s.y-d); ctx.lineTo(s.x+d,s.y+d); ctx.stroke();
-                        ctx.beginPath(); ctx.moveTo(s.x+d,s.y-d); ctx.lineTo(s.x-d,s.y+d); ctx.stroke();
-                    }
                     ctx.restore();
                 }
-
-                // Glow halo on flash
-                if (s.flashing && s.flashBrightness > 0.2) {
-                    const boost = Math.sin(s.flashBrightness);
-                    const flashRgb = hexToRgb(getAccentColor());
-                    const haloGrad = ctx.createRadialGradient(s.x,s.y,0,s.x,s.y,s.r*10*boost);
-                    haloGrad.addColorStop(0, `rgba(${flashRgb[0]},${flashRgb[1]},${flashRgb[2]},${boost*0.4})`);
-                    haloGrad.addColorStop(1, `rgba(${flashRgb[0]},${flashRgb[1]},${flashRgb[2]},0)`);
-                    ctx.beginPath(); ctx.arc(s.x,s.y,s.r*10*boost,0,Math.PI*2);
-                    ctx.fillStyle = haloGrad; ctx.fill();
-                }
-
                 ctx.beginPath();
                 ctx.arc(s.x, s.y, s.r * (1 + (s.flashing ? Math.sin(s.flashBrightness)*0.8 : 0)), 0, Math.PI*2);
                 ctx.fillStyle = `rgba(${r},${g},${b},${a})`;
                 ctx.fill();
             }
 
-            function drawMeteor(m) {
-                m.traveled += m.speed;
-                m.hx = m.sx + m.dx * m.traveled;
-                m.hy = m.sy + m.dy * m.traveled;
-
-                // Check if off screen enough
-                if (m.traveled > m.totalDist + m.length) {
-                    m.alive = false;
-                    return;
-                }
-
-                // Tail start (behind head)
-                const tailLen = Math.min(m.length, m.traveled);
-                const tx = m.hx - m.dx * tailLen;
-                const ty = m.hy - m.dy * tailLen;
-
-                // Fade based on position (fade in at start, fade out near end)
-                const progress = m.traveled / m.totalDist;
-                let masterAlpha = m.brightness;
-                if (progress < 0.08) masterAlpha *= progress / 0.08;
-                if (progress > 0.75) masterAlpha *= Math.max(0, 1 - (progress - 0.75) / 0.25);
-
-                const accent = getAccentColor();
-                const accentRgb = hexToRgb(accent);
-
-                // === OUTER WIDE GLOW (diffuse) ===
-                const outerGrad = ctx.createLinearGradient(tx, ty, m.hx, m.hy);
-                outerGrad.addColorStop(0, `rgba(${accentRgb[0]},${accentRgb[1]},${accentRgb[2]},0)`);
-                outerGrad.addColorStop(0.6, `rgba(${accentRgb[0]},${accentRgb[1]},${accentRgb[2]},${masterAlpha * 0.12})`);
-                outerGrad.addColorStop(1, `rgba(200,230,255,${masterAlpha * 0.15})`);
-
-                ctx.save();
-                ctx.lineWidth = m.width * 12;
-                ctx.strokeStyle = outerGrad;
-                ctx.lineCap = 'round';
-                ctx.globalCompositeOperation = 'screen';
-                ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(m.hx, m.hy); ctx.stroke();
-
-                // === MID GLOW (green-yellow like real meteors) ===
-                const midGrad = ctx.createLinearGradient(tx, ty, m.hx, m.hy);
-                midGrad.addColorStop(0, `rgba(0,0,0,0)`);
-                if (m.useGreen) {
-                    midGrad.addColorStop(0.5, `rgba(120,220,80,${masterAlpha * 0.35})`);
-                    midGrad.addColorStop(0.85, `rgba(200,255,100,${masterAlpha * 0.55})`);
-                    midGrad.addColorStop(1, `rgba(255,255,220,${masterAlpha * 0.8})`);
-                } else {
-                    midGrad.addColorStop(0.5, `rgba(${accentRgb[0]},${accentRgb[1]},${accentRgb[2]},${masterAlpha * 0.4})`);
-                    midGrad.addColorStop(1, `rgba(255,255,255,${masterAlpha * 0.8})`);
-                }
-                ctx.lineWidth = m.width * 4;
-                ctx.strokeStyle = midGrad;
-                ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(m.hx, m.hy); ctx.stroke();
-
-                // === CORE (bright white center) ===
-                const coreGrad = ctx.createLinearGradient(tx, ty, m.hx, m.hy);
-                coreGrad.addColorStop(0, `rgba(255,255,255,0)`);
-                coreGrad.addColorStop(0.7, `rgba(255,255,255,${masterAlpha * 0.6})`);
-                coreGrad.addColorStop(1, `rgba(255,255,255,${masterAlpha})`);
-                ctx.lineWidth = m.width * 0.8;
-                ctx.strokeStyle = coreGrad;
-                ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(m.hx, m.hy); ctx.stroke();
-
-                // === HEAD FLARE ===
-                const hGrad = ctx.createRadialGradient(m.hx, m.hy, 0, m.hx, m.hy, m.width * 7);
-                hGrad.addColorStop(0, `rgba(255,255,255,${masterAlpha * 0.95})`);
-                hGrad.addColorStop(0.3, m.useGreen
-                    ? `rgba(160,255,100,${masterAlpha * 0.5})`
-                    : `rgba(${accentRgb[0]},${accentRgb[1]},${accentRgb[2]},${masterAlpha * 0.5})`);
-                hGrad.addColorStop(1, `rgba(0,0,0,0)`);
-                ctx.beginPath(); ctx.arc(m.hx, m.hy, m.width * 7, 0, Math.PI*2);
-                ctx.fillStyle = hGrad; ctx.fill();
-
-                ctx.restore();
-            }
-
             function animate() {
-                // Deep space background
                 ctx.fillStyle = 'rgba(5, 8, 16, 0.18)';
                 ctx.fillRect(0, 0, W, H);
-
-                // Background stars
                 ctx.globalCompositeOperation = 'source-over';
                 bgStars.forEach(drawBgStar);
 
-                // Subtle nebula in top-left corner like in photo
                 const nebula = ctx.createRadialGradient(W*0.1, H*0.15, 0, W*0.1, H*0.15, W*0.35);
-                nebula.addColorStop(0, 'rgba(80,30,60,0.04)');
-                nebula.addColorStop(0.5, 'rgba(60,20,80,0.025)');
-                nebula.addColorStop(1, 'rgba(0,0,0,0)');
-                ctx.fillStyle = nebula;
-                ctx.fillRect(0, 0, W, H);
+                nebula.addColorStop(0, 'rgba(80,30,60,0.04)'); nebula.addColorStop(0.5, 'rgba(60,20,80,0.025)'); nebula.addColorStop(1, 'rgba(0,0,0,0)');
+                ctx.fillStyle = nebula; ctx.fillRect(0, 0, W, H);
 
-                // Meteors
                 spawnTimer++;
-                if (spawnTimer > 28 + Math.random() * 40 && meteors.length < 12) {
-                    meteors.push(createMeteor(false));
-                    spawnTimer = 0;
-                }
+                if (spawnTimer > 28 + Math.random() * 40 && meteors.length < 12) { meteors.push(createMeteor(false)); spawnTimer = 0; }
 
                 for (let i = meteors.length - 1; i >= 0; i--) {
-                    drawMeteor(meteors[i]);
-                    if (!meteors[i].alive) {
-                        meteors.splice(i, 1);
-                    }
+                    const m = meteors[i];
+                    m.traveled += m.speed; m.hx = m.sx + m.dx * m.traveled; m.hy = m.sy + m.dy * m.traveled;
+                    if (m.traveled > m.totalDist + m.length) { m.alive = false; meteors.splice(i, 1); continue; }
+                    
+                    const tailLen = Math.min(m.length, m.traveled);
+                    const tx = m.hx - m.dx * tailLen, ty = m.hy - m.dy * tailLen;
+                    let masterAlpha = m.brightness;
+                    const progress = m.traveled / m.totalDist;
+                    if (progress < 0.08) masterAlpha *= progress / 0.08;
+                    if (progress > 0.75) masterAlpha *= Math.max(0, 1 - (progress - 0.75) / 0.25);
+                    
+                    const accentRgb = hexToRgb(getAccentColor());
+                    ctx.save(); ctx.lineWidth = m.width * 12;
+                    const outerGrad = ctx.createLinearGradient(tx, ty, m.hx, m.hy);
+                    outerGrad.addColorStop(0, `rgba(${accentRgb[0]},${accentRgb[1]},${accentRgb[2]},0)`);
+                    outerGrad.addColorStop(0.6, `rgba(${accentRgb[0]},${accentRgb[1]},${accentRgb[2]},${masterAlpha * 0.12})`);
+                    outerGrad.addColorStop(1, `rgba(200,230,255,${masterAlpha * 0.15})`);
+                    ctx.strokeStyle = outerGrad; ctx.lineCap = 'round'; ctx.globalCompositeOperation = 'screen';
+                    ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(m.hx, m.hy); ctx.stroke();
+                    ctx.restore();
                 }
-
                 starAnimId = requestAnimationFrame(animate);
             }
-
-            // First frame: fill background solid
-            ctx.fillStyle = '#050810';
-            ctx.fillRect(0, 0, W, H);
-
+            ctx.fillStyle = '#050810'; ctx.fillRect(0, 0, W, H);
             animate();
         }
 
-
-        // ===== NEON FIELD (old-school neon stars from sides) =====
         function initNeonField() {
             cancelAnimationFrame(starAnimId);
             const canvas = document.getElementById('starfield');
             const ctx = canvas.getContext('2d');
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+            canvas.width = window.innerWidth; canvas.height = window.innerHeight;
             const W = canvas.width, H = canvas.height;
-
-            function hexToRgbNf(hex) {
-                hex = hex.replace('#','');
-                if (hex.length === 3) hex = hex.split('').map(c=>c+c).join('');
-                const n = parseInt(hex, 16);
-                return [(n>>16)&255, (n>>8)&255, n&255];
-            }
 
             const particles = [];
             for (let i = 0; i < 120; i++) {
                 const fromLeft = Math.random() < 0.5;
                 particles.push({
-                    x: fromLeft ? Math.random() * W * 0.2 : W - Math.random() * W * 0.2,
-                    y: Math.random() * H,
-                    size: Math.random() * 2 + 0.3,
-                    speedX: (fromLeft ? 1 : -1) * (Math.random() * 0.4 + 0.1),
-                    speedY: (Math.random() - 0.5) * 0.3,
-                    opacity: Math.random() * 0.7 + 0.3,
-                    pulse: Math.random() * Math.PI * 2,
-                    fromLeft
+                    x: fromLeft ? Math.random() * W * 0.2 : W - Math.random() * W * 0.2, y: Math.random() * H,
+                    size: Math.random() * 2 + 0.3, speedX: (fromLeft ? 1 : -1) * (Math.random() * 0.4 + 0.1),
+                    speedY: (Math.random() - 0.5) * 0.3, opacity: Math.random() * 0.7 + 0.3, pulse: Math.random() * Math.PI * 2, fromLeft
                 });
             }
 
-            // Shooting stars
             const shoots = [];
-            function mkShoot() {
-                return {
-                    x: Math.random() * W, y: -10,
-                    len: Math.random() * 120 + 60,
-                    speed: Math.random() * 3 + 2,
-                    angle: Math.PI/2 + (Math.random()-0.5)*0.4,
-                    alpha: Math.random() * 0.6 + 0.4,
-                    done: false, progress: 0
-                };
-            }
+            function mkShoot() { return { x: Math.random() * W, y: -10, len: Math.random() * 120 + 60, speed: Math.random() * 3 + 2, angle: Math.PI/2 + (Math.random()-0.5)*0.4, alpha: Math.random() * 0.6 + 0.4, done: false, progress: 0 }; }
             for (let i = 0; i < 4; i++) shoots.push(mkShoot());
             let shootTimer = 0;
 
             function animate() {
-                ctx.fillStyle = 'rgba(5,8,16,0.15)';
-                ctx.fillRect(0, 0, W, H);
-                const accent = getAccentColor();
-                const rgb = hexToRgbNf(accent);
+                ctx.fillStyle = 'rgba(5,8,16,0.15)'; ctx.fillRect(0, 0, W, H);
+                const rgb = hexToRgb(getAccentColor());
 
                 particles.forEach(s => {
-                    s.pulse += 0.025;
-                    const glow = 0.5 + 0.5 * Math.sin(s.pulse);
-                    const a = s.opacity * glow;
-                    const r = s.size * 6;
+                    s.pulse += 0.025; const a = s.opacity * (0.5 + 0.5 * Math.sin(s.pulse)); const r = s.size * 6;
                     const grad = ctx.createRadialGradient(s.x,s.y,0, s.x,s.y,r);
                     grad.addColorStop(0, `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${a})`);
                     grad.addColorStop(0.3, `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${a*0.5})`);
                     grad.addColorStop(1, `rgba(${rgb[0]},${rgb[1]},${rgb[2]},0)`);
-                    ctx.beginPath(); ctx.arc(s.x, s.y, r, 0, Math.PI*2);
-                    ctx.fillStyle = grad; ctx.fill();
-                    ctx.beginPath(); ctx.arc(s.x, s.y, s.size*0.6, 0, Math.PI*2);
-                    ctx.fillStyle = `rgba(255,255,255,${a*0.85})`; ctx.fill();
+                    ctx.beginPath(); ctx.arc(s.x, s.y, r, 0, Math.PI*2); ctx.fillStyle = grad; ctx.fill();
+                    ctx.beginPath(); ctx.arc(s.x, s.y, s.size*0.6, 0, Math.PI*2); ctx.fillStyle = `rgba(255,255,255,${a*0.85})`; ctx.fill();
 
                     s.x += s.speedX; s.y += s.speedY;
-                    if (s.x < -10 || s.x > W+10) {
-                        s.fromLeft = !s.fromLeft;
-                        s.x = s.fromLeft ? 0 : W;
-                        s.y = Math.random() * H;
-                        s.speedX = (s.fromLeft ? 1 : -1) * (Math.random()*0.4+0.1);
-                    }
-                    if (s.y < -5) s.y = H+5;
-                    if (s.y > H+5) s.y = -5;
+                    if (s.x < -10 || s.x > W+10) { s.fromLeft = !s.fromLeft; s.x = s.fromLeft ? 0 : W; s.y = Math.random() * H; s.speedX = (s.fromLeft ? 1 : -1) * (Math.random()*0.4+0.1); }
+                    if (s.y < -5) s.y = H+5; if (s.y > H+5) s.y = -5;
                 });
 
-                // Shooting stars
                 shootTimer++;
-                if (shootTimer > 90 && shoots.filter(s=>!s.done).length < 3) {
-                    shoots.push(mkShoot()); shootTimer = 0;
-                }
+                if (shootTimer > 90 && shoots.filter(s=>!s.done).length < 3) { shoots.push(mkShoot()); shootTimer = 0; }
                 for (let i = shoots.length-1; i >= 0; i--) {
-                    const s = shoots[i];
-                    s.progress += s.speed;
-                    const hx = s.x + Math.cos(s.angle) * s.progress;
-                    const hy = s.y + Math.sin(s.angle) * s.progress;
-                    const tx = hx - Math.cos(s.angle) * s.len;
-                    const ty = hy - Math.sin(s.angle) * s.len;
+                    const s = shoots[i]; s.progress += s.speed;
+                    const hx = s.x + Math.cos(s.angle) * s.progress, hy = s.y + Math.sin(s.angle) * s.progress;
+                    const tx = hx - Math.cos(s.angle) * s.len, ty = hy - Math.sin(s.angle) * s.len;
                     const g = ctx.createLinearGradient(tx,ty,hx,hy);
-                    g.addColorStop(0, `rgba(${rgb[0]},${rgb[1]},${rgb[2]},0)`);
-                    g.addColorStop(0.7, `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${s.alpha*0.5})`);
-                    g.addColorStop(1, `rgba(255,255,255,${s.alpha})`);
-                    ctx.beginPath(); ctx.moveTo(tx,ty); ctx.lineTo(hx,hy);
-                    ctx.strokeStyle = g; ctx.lineWidth = 1.5; ctx.stroke();
-                    if (hy > H+s.len || hx > W+s.len || hx < -s.len) {
-                        shoots.splice(i,1);
-                    }
+                    g.addColorStop(0, `rgba(${rgb[0]},${rgb[1]},${rgb[2]},0)`); g.addColorStop(0.7, `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${s.alpha*0.5})`); g.addColorStop(1, `rgba(255,255,255,${s.alpha})`);
+                    ctx.beginPath(); ctx.moveTo(tx,ty); ctx.lineTo(hx,hy); ctx.strokeStyle = g; ctx.lineWidth = 1.5; ctx.stroke();
+                    if (hy > H+s.len || hx > W+s.len || hx < -s.len) shoots.splice(i,1);
                 }
-
                 starAnimId = requestAnimationFrame(animate);
             }
             ctx.fillStyle = '#050810'; ctx.fillRect(0,0,W,H);
